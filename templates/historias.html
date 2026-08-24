@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Historias Clínicas - Consultorio Psicológico{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Historias Clínicas Psicología</h1>
+        <p class="page-subtitle">Ficha de identificación, antecedentes, diagnósticos y planes de intervención</p>
+    </div>
+    {% if current_user_role in ['Administrador', 'Especialista'] %}
+    <a href="{{ url_for('crear_historia') }}" class="btn btn-primary">
+        <i class="fa-solid fa-folder-plus"></i>
+        <span>Formato Oficial de Admisión</span>
+    </a>
+    {% endif %}
+</div>
+
+<!-- Lista de Historias Clínicas -->
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th># Historia</th>
+                    <th>Paciente / Cliente</th>
+                    <th>Edad</th>
+                    <th>Teléfono</th>
+                    <th>Diagnóstico Principal</th>
+                    <th>Psicólogo Responsable</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in historias %}
+                <tr>
+                    <td><strong>HC-{{ "%04d"|format(h.id_historia) }}</strong></td>
+                    <td>{{ h.cliente.nombres_apellidos }}</td>
+                    <td>{{ h.edad or '-' }} años</td>
+                    <td>{{ h.telefono or '-' }}</td>
+                    <td>{{ h.codigo_cie11_dsm5 or 'Pendiente' }}</td>
+                    <td>{{ h.psicologo_responsable or 'Sin asignar' }}</td>
+                    <td>
+                        <a href="{{ url_for('ver_historia', id_historia=h.id_historia) }}" class="btn btn-secondary btn-sm">
+                            <i class="fa-solid fa-eye"></i> Ver Ficha Completa
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">
+                        No hay historias clínicas registradas aún.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

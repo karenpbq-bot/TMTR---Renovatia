@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Renovatia - Gestión Psicológica{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    {% if session.get('user_id') %}
+    <div class="app-container">
+        <!-- Sidebar de Navegación -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon">
+                    <i class="fa-solid fa-brain"></i>
+                </div>
+                <span class="brand-title">Renovatia</span>
+            </div>
+
+            <ul class="nav-list">
+                <li class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                {% if current_user_role in ['Administrador', 'Recepcionista'] %}
+                <li class="nav-item {% if request.endpoint == 'usuarios' %}active{% endif %}">
+                    <a href="{{ url_for('usuarios') }}">
+                        <i class="fa-solid fa-users-gear"></i>
+                        <span>Usuarios y Roles</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item {% if request.endpoint == 'citas' %}active{% endif %}">
+                    <a href="{{ url_for('citas') }}">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Agenda de Citas</span>
+                    </a>
+                </li>
+
+                {% if current_user_role in ['Administrador', 'Especialista', 'Recepcionista', 'Cliente'] %}
+                <li class="nav-item {% if request.endpoint in ['historias', 'ver_historia'] %}active{% endif %}">
+                    <a href="{{ url_for('historias') }}">
+                        <i class="fa-solid fa-file-medical"></i>
+                        <span>Historias Clínicas</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if current_user_role in ['Administrador', 'Especialista'] %}
+                <li class="nav-item {% if request.endpoint == 'sesiones' %}active{% endif %}">
+                    <a href="{{ url_for('sesiones') }}">
+                        <i class="fa-solid fa-notes-medical"></i>
+                        <span>Sesiones Evolución</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+
+            <div class="sidebar-user">
+                <div class="user-info">
+                    <span class="user-name">{{ current_user_name }}</span>
+                    <span class="user-role-badge badge-{{ current_user_role | lower }}">
+                        {{ current_user_role }}
+                    </span>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn-logout">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="alerts-container">
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% else %}
+        {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

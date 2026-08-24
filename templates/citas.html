@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Agenda de Citas - Consultorio Psicológico{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Agenda y Atención de Citas</h1>
+        <p class="page-subtitle">Programación de citas y registro de evoluciones clínicas</p>
+    </div>
+    {% if current_user_role in ['Administrador', 'Recepcionista', 'Cliente'] %}
+    <button class="btn btn-primary" onclick="toggleModal('modalAgendarCita')">
+        <i class="fa-solid fa-calendar-plus"></i>
+        <span>Agendar Nueva Cita</span>
+    </button>
+    {% endif %}
+</div>
+
+<!-- Modal Agendar Cita -->
+{% if current_user_role in ['Administrador', 'Recepcionista', 'Cliente'] %}
+<div id="modalAgendarCita" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card-panel" style="width: 100%; max-width: 520px; margin: 0;">
+        <div class="card-header">
+            <h2 class="card-title">Programar Cita Médica</h2>
+            <button onclick="toggleModal('modalAgendarCita')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form action="{{ url_for('citas') }}" method="POST">
+            {% if current_user_role == 'Cliente' %}
+                <input type="hidden" name="id_cliente" value="{{ current_user_id }}">
+            {% else %}
+            <div class="form-group">
+                <label for="id_cliente" class="form-label">Cliente / Paciente *</label>
+                <select id="id_cliente" name="id_cliente" class="form-select" required>
+                    <option value="">-- Seleccionar Cliente --</option>
+                    {% for c in clientes %}
+                    <option value="{{ c.id_usuario }}">{{ c.nombres_apellidos }} ({{ c.correo }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_especialista" class="form-label">Especialista Psicólogo *</label>
+                <select id="id_especialista" name="id_especialista" class="form-select" required>
+                    <option value="">-- Seleccionar Especialista --</option>
+                    {% for esp in especialistas %}
+                    <option value="{{ esp.id_usuario }}">{{ esp.nombres_apellidos }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="fecha_hora" class="form-label">Fecha y Hora *</label>
+                <input type="datetime-local" id="fecha_hora" name="fecha_hora" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="motivo" class="form-label">Motivo de la Cita</label>
+                <input type="text" id="motivo" name="motivo" class="form-control" placeholder="Ej. Evaluación inicial, Terapia Cognitivo-Conductual...">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="toggleModal('modalAgendarCita')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Agendar Cita</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Lista de Citas -->
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th># Cita</th>
+                    <th>Cliente / Paciente</th>
+                    <th>Especialista</th>
+                    <th>Fecha y Hora</th>
+                    <th>Estado</th>
+                    <th>Motivo</th>
+                    <th>Acciones / Atención</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cita in citas %}
+                <tr>
+                    <td><strong>#{{ cita.id_cita }}</strong></td>
+                    <td>{{ cita.cliente.nombres_apellidos }}</td>
+                    <td>{{ cita.especialista.nombres_apellidos }}</td>
+                    <td>{{ cita.fecha_hora.strftime('%d/%m/%Y %H:%M hrs') }}</td>
+                    <td>
+                        <span class="badge badge-{{ cita.estado | lower }}">
+                            {{ cita.estado }}
+                        </span>
+                    </td>
+                    <td>{{ cita.motivo or '-' }}</td>
+                    <td>
+                        <div style="display: flex; gap: 0.4rem; align-items: center;">
+                            {% if current_user_role in ['Administrador', 'Especialista'] and cita.estado == 'Programada' %}
+                            <button class="btn btn-primary btn-sm" onclick="toggleModal('modalAtenderCita-{{ cita.id_cita }}')">
+                                <i class="fa-solid fa-notes-medical"></i> Atender
+                            </button>
+
+                            <!-- Modal Atender Cita -->
+                            <div id="modalAtenderCita-{{ cita.id_cita }}" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+                                <div class="card-panel" style="width: 100%; max-width: 550px; text-align: left;">
+                                    <div class="card-header">
+                                        <h3 class="card-title">Atención de Cita #{{ cita.id_cita }}</h3>
+                                        <button onclick="toggleModal('modalAtenderCita-{{ cita.id_cita }}')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                                        Paciente: <strong>{{ cita.cliente.nombres_apellidos }}</strong>
+                                    </p>
+                                    <form action="{{ url_for('atender_cita', id_cita=cita.id_cita) }}" method="POST">
+                                        <div class="form-group">
+                                            <label for="evolucion_clinica" class="form-label">Evolución Clínica *</label>
+                                            <textarea name="evolucion_clinica" class="form-control" rows="3" required placeholder="Avance de la sesión, aspectos abordados..."></textarea>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="observaciones_conductuales" class="form-label">Observaciones Conductuales</label>
+                                            <textarea name="observaciones_conductuales" class="form-control" rows="2" placeholder="Tono de voz, actitud, lenguaje no verbal..."></textarea>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1rem;">
+                                            <button type="button" class="btn btn-secondary" onclick="toggleModal('modalAtenderCita-{{ cita.id_cita }}')">Cancelar</button>
+                                            <button type="submit" class="btn btn-primary">Guardar Evolución y Completar Cita</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {% if current_user_role in ['Administrador', 'Recepcionista', 'Especialista'] %}
+                            <form action="{{ url_for('cambiar_estado_cita', id_cita=cita.id_cita) }}" method="POST" style="display: inline-block;">
+                                <select name="estado" class="form-select" style="padding: 0.25rem 0.4rem; font-size: 0.8rem; width: auto;" onchange="this.form.submit()">
+                                    {% for est in estados_cita %}
+                                    <option value="{{ est }}" {% if cita.estado == est %}selected{% endif %}>{{ est }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">
+                        No hay citas agendadas registradas.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

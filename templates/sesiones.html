@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Sesiones de Evolución - Consultorio Psicológico{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Sesiones de Evolución Clínica</h1>
+        <p class="page-subtitle">Registro continuo de la evolución y observaciones conductuales del paciente</p>
+    </div>
+    {% if current_user_role in ['Administrador', 'Especialista'] %}
+    <button class="btn btn-primary" onclick="toggleModal('modalNuevaSesion')">
+        <i class="fa-solid fa-plus"></i>
+        <span>Nueva Sesión de Evolución</span>
+    </button>
+    {% endif %}
+</div>
+
+<!-- Modal Registrar Nueva Sesión -->
+{% if current_user_role in ['Administrador', 'Especialista'] %}
+<div id="modalNuevaSesion" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card-panel" style="width: 100%; max-width: 600px; margin: 0;">
+        <div class="card-header">
+            <h2 class="card-title">Registrar Evolución de Sesión</h2>
+            <button onclick="toggleModal('modalNuevaSesion')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        <form action="{{ url_for('sesiones') }}" method="POST">
+            <div class="form-group">
+                <label for="id_historia" class="form-label">Historia Clínica / Paciente *</label>
+                <select id="id_historia" name="id_historia" class="form-select" required>
+                    <option value="">-- Seleccionar Historia Clínica --</option>
+                    {% for h in historias %}
+                    <option value="{{ h.id_historia }}">
+                        HC-{{ "%04d"|format(h.id_historia) }} | {{ h.cliente.nombres_apellidos }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="evolucion_clinica" class="form-label">Evolución Clínica *</label>
+                <textarea id="evolucion_clinica" name="evolucion_clinica" class="form-control" rows="3" required placeholder="Describa el avance del paciente, temáticas abordadas y técnicas aplicadas..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="observaciones_conductuales" class="form-label">Observaciones Conductuales</label>
+                <textarea id="observaciones_conductuales" name="observaciones_conductuales" class="form-control" rows="2" placeholder="Gestos, tono de voz, nivel de contacto visual, afecto exhibido..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                <button type="button" class="btn btn-secondary" onclick="toggleModal('modalNuevaSesion')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Evolución</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla de Sesiones de Evolución -->
+<div class="card-panel">
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th># Sesión</th>
+                    <th>Historia Clínica</th>
+                    <th>Paciente</th>
+                    <th>Fecha y Hora</th>
+                    <th>Evolución Clínica</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sesiones %}
+                <tr>
+                    <td><strong>#{{ s.id_sesion }}</strong></td>
+                    <td>HC-{{ "%04d"|format(s.id_historia) }}</td>
+                    <td>{{ s.historia_clinica.cliente.nombres_apellidos }}</td>
+                    <td>{{ s.fecha_sesion.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td style="max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        {{ s.evolucion_clinica }}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('ver_historia', id_historia=s.id_historia) }}" class="btn btn-secondary btn-sm">
+                            <i class="fa-solid fa-eye"></i> Ver Historia
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem 0;">
+                        No existen sesiones de evolución registradas aún.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

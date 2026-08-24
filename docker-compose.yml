@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: consultorio_psicologico_app
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - SECRET_KEY=consultorio-psicologico-secret-key-2026
+      - DATABASE_URL=sqlite:////app/database/consultorio.db
+    volumes:
+      # Mapeo del volumen local para persistencia de la base de datos SQLite
+      - ./database:/app/database

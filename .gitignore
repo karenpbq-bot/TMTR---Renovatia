@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+
+# Base de datos SQLite local (para no subir datos de prueba locales)
+database/*.db
+
+# Archivos de credenciales privadas de Google API
+credentials.json
+*.json
+
+# Archivos de entorno y variables secretas
+.env
+.DS_Store
+*.log

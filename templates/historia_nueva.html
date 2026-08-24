@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Apertura de Historia Clínica Psicología - Formato Oficial{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Ficha Oficial de Admisión e Historia Clínica</h1>
+        <p class="page-subtitle">Formato estandarizado de evaluación e historia clínica psicológica</p>
+    </div>
+    <a href="{{ url_for('historias') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver a Historias</span>
+    </a>
+</div>
+
+<div class="card-panel">
+    <form action="{{ url_for('crear_historia') }}" method="POST">
+        <!-- Selección de Paciente -->
+        <div class="clinical-section" style="background: #e0e7ff; border-color: #c7d2fe;">
+            <div class="clinical-section-title" style="color: #3730a3; border-color: #a5b4fc;">
+                <i class="fa-solid fa-user-check"></i> Selección de Cliente / Paciente
+            </div>
+            <div class="form-group">
+                <label for="id_cliente" class="form-label" style="font-size: 0.95rem;">Seleccionar Cliente Registrado *</label>
+                <select id="id_cliente" name="id_cliente" class="form-select" style="font-size: 1rem; padding: 0.75rem;" required>
+                    <option value="">-- Seleccione el paciente para aperturar la historia --</option>
+                    {% for cli in clientes_sin_historia %}
+                    <option value="{{ cli.id_usuario }}">{{ cli.nombres_apellidos }} (Correo: {{ cli.correo }})</option>
+                    {% endfor %}
+                </select>
+                {% if not clientes_sin_historia %}
+                <small style="color: #4338ca; margin-top: 0.35rem; display: block;">
+                    * Todos los clientes registrados ya poseen una historia clínica aperturada.
+                </small>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 1. Ficha de Identificación -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
+                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="edad" class="form-label">Edad (Años)</label>
+                    <input type="number" id="edad" name="edad" class="form-control" placeholder="Ej. 25">
+                </div>
+                <div class="form-group">
+                    <label for="procedencia" class="form-label">Procedencia / Ciudad</label>
+                    <input type="text" id="procedencia" name="procedencia" class="form-control" placeholder="Ej. Lima, Perú">
+                </div>
+                <div class="form-group">
+                    <label for="grado_instruccion" class="form-label">Grado de Instrucción</label>
+                    <input type="text" id="grado_instruccion" name="grado_instruccion" class="form-control" placeholder="Ej. Superior Universitario">
+                </div>
+                <div class="form-group">
+                    <label for="institucion" class="form-label">Institución Educativa / Centro Laboral</label>
+                    <input type="text" id="institucion" name="institucion" class="form-control" placeholder="Ej. Universidad Nacional">
+                </div>
+                <div class="form-group">
+                    <label for="nombres_padres" class="form-label">Nombres de los Padres / Apoderados</label>
+                    <input type="text" id="nombres_padres" name="nombres_padres" class="form-control" placeholder="Ej. Carlos Gómez / María Silva">
+                </div>
+                <div class="form-group">
+                    <label for="telefono" class="form-label">Teléfono de Contacto</label>
+                    <input type="text" id="telefono" name="telefono" class="form-control" placeholder="Ej. +51 987654321">
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Motivo de Consulta -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-comment-medical"></i> 2. Motivo de Consulta
+            </div>
+            <div class="form-group">
+                <label for="motivo_consulta" class="form-label">Descripción textual del motivo de consulta expresado por el paciente o tutor</label>
+                <textarea id="motivo_consulta" name="motivo_consulta" class="form-control" rows="3" placeholder="Ej. El paciente refiere cuadros de insomnio persistente y dificultad para concentrarse en jornada laboral..."></textarea>
+            </div>
+        </div>
+
+        <!-- 3. Anamnesis Psicológica -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-clipboard-question"></i> 3. Anamnesis Psicológica (Antecedentes)
+            </div>
+            <div class="form-group">
+                <label for="problema_actual" class="form-label">Problema Actual y Sintomatología Principales</label>
+                <textarea id="problema_actual" name="problema_actual" class="form-control" rows="3" placeholder="Inicio de los síntomas, frecuencia, intensidad y factores desencadenantes..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="historia_desarrollo" class="form-label">Historia de Desarrollo (Etapa Prenatal, Infancia, Hitos)</label>
+                <textarea id="historia_desarrollo" name="historia_desarrollo" class="form-control" rows="2" placeholder="Hitos del desarrollo psicomotor, lenguaje, autonomía..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="historia_escolar_social" class="form-label">Historia Escolar y Social</label>
+                <textarea id="historia_escolar_social" name="historia_escolar_social" class="form-control" rows="2" placeholder="Adaptación escolar, rendimiento académico, habilidades sociales e interpersonales..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="dinamica_familiar" class="form-label">Dinámica y Estructura Familiar</label>
+                <textarea id="dinamica_familiar" name="dinamica_familiar" class="form-control" rows="2" placeholder="Relación con padres, hermanos, estilos de crianza y comunicación en el hogar..."></textarea>
+            </div>
+        </div>
+
+        <!-- 4. Diagnóstico Clínico (CIE-11 / DSM-5) -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-notes-medical"></i> 4. Diagnóstico Clínico (CIE-11 / DSM-5)
+            </div>
+            <div class="form-group">
+                <label for="codigo_cie11_dsm5" class="form-label">Impresión Diagnóstica y Códigos Oficiales</label>
+                <textarea id="codigo_cie11_dsm5" name="codigo_cie11_dsm5" class="form-control" rows="2" placeholder="Ej. CIE-11: 6B00 Trastorno de Ansiedad Generalizada / DSM-5: 300.02 (F41.1)"></textarea>
+            </div>
+        </div>
+
+        <!-- 5. Plan de Intervención -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-list-check"></i> 5. Plan de Intervención Terapéutica
+            </div>
+            <div class="form-group">
+                <label for="objetivos_menor" class="form-label">Objetivos Terapéuticos Directos (Paciente)</label>
+                <textarea id="objetivos_menor" name="objetivos_menor" class="form-control" rows="2" placeholder="Técnicas de reestructuración cognitiva, manejo del estrés, regulación emocional..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="objetivos_padres" class="form-label">Objetivos para los Padres / Familia</label>
+                <textarea id="objetivos_padres" name="objetivos_padres" class="form-control" rows="2" placeholder="Pautas de psicoeducación, límites asertivos, reforzamiento positivo..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="coordinacion_externa" class="form-label">Coordinación Externa (Médica / Escolar / Psiquiátrica)</label>
+                <textarea id="coordinacion_externa" name="coordinacion_externa" class="form-control" rows="2" placeholder="Derivación a neurología, psiquiatría o informes a departamento psicopedagógico..."></textarea>
+            </div>
+        </div>
+
+        <!-- 6. Profesional Responsable -->
+        <div class="clinical-section">
+            <div class="clinical-section-title">
+                <i class="fa-solid fa-user-doctor"></i> 6. Firma y Registro del Especialista
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="psicologo_responsable" class="form-label">Psicólogo(a) Responsable</label>
+                    <input type="text" id="psicologo_responsable" name="psicologo_responsable" class="form-control" value="{{ current_user_name }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="colegiatura_csp" class="form-label">Número de Colegiatura C.Ps.P.</label>
+                    <input type="text" id="colegiatura_csp" name="colegiatura_csp" class="form-control" placeholder="Ej. C.Ps.P. 28491" required>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+            <a href="{{ url_for('historias') }}" class="btn btn-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
+                <i class="fa-solid fa-floppy-disk"></i> Guardar Historia Clínica
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

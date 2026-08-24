@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+
+{% block title %}Historia Clínica HC-{{ "%04d"|format(historia.id_historia) }} - Consultorio Psicológico{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Historia Clínica HC-{{ "%04d"|format(historia.id_historia) }}</h1>
+        <p class="page-subtitle">Paciente: <strong>{{ historia.cliente.nombres_apellidos }}</strong> ({{ historia.cliente.correo }})</p>
+    </div>
+    <a href="{{ url_for('historias') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i>
+        <span>Volver a la lista</span>
+    </a>
+</div>
+
+<!-- Ficha de Identificación -->
+<div class="card-panel">
+    <h2 class="card-title" style="margin-bottom: 1rem; color: var(--primary);">
+        <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación
+    </h2>
+    <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+        <div><strong>Fecha Nacimiento:</strong> {{ historia.fecha_nacimiento.strftime('%d/%m/%Y') if historia.fecha_nacimiento else 'N/A' }}</div>
+        <div><strong>Edad:</strong> {{ historia.edad or 'N/A' }} años</div>
+        <div><strong>Procedencia:</strong> {{ historia.procedencia or 'N/A' }}</div>
+        <div><strong>Grado Instrucción:</strong> {{ historia.grado_instruccion or 'N/A' }}</div>
+        <div><strong>Institución:</strong> {{ historia.institucion or 'N/A' }}</div>
+        <div><strong>Nombres de los Padres:</strong> {{ historia.nombres_padres or 'N/A' }}</div>
+        <div><strong>Teléfono:</strong> {{ historia.telefono or 'N/A' }}</div>
+    </div>
+</div>
+
+<!-- Antecedentes -->
+<div class="card-panel">
+    <h2 class="card-title" style="margin-bottom: 1rem; color: var(--primary);">
+        <i class="fa-solid fa-clipboard-list"></i> 2. Antecedentes
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+            <strong>Motivo de Consulta:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.motivo_consulta or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Problema Actual:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.problema_actual or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Historia de Desarrollo:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.historia_desarrollo or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Historia Escolar y Social:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.historia_escolar_social or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Dinámica Familiar:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.dinamica_familiar or 'Sin información' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Diagnóstico y Plan de Intervención -->
+<div class="card-panel">
+    <h2 class="card-title" style="margin-bottom: 1rem; color: var(--primary);">
+        <i class="fa-solid fa-stethoscope"></i> 3. Diagnóstico y Plan de Intervención
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        <div>
+            <strong>Diagnóstico (CIE-11 / DSM-5):</strong>
+            <div style="background: #e0e7ff; color: #3730a3; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-weight: 600; margin-top: 0.35rem;">
+                {{ historia.codigo_cie11_dsm5 or 'Diagnóstico no asignado' }}
+            </div>
+        </div>
+        <div>
+            <strong>Objetivos del Menor / Paciente:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.objetivos_menor or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Objetivos de los Padres / Familia:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.objetivos_padres or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Coordinación Externa:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.coordinacion_externa or 'Sin información' }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Profesional Responsable -->
+<div class="card-panel" style="background: #f1f5f9;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <strong>Psicólogo Responsable:</strong> {{ historia.psicologo_responsable or 'N/A' }}
+        </div>
+        <div>
+            <strong>Colegiatura C.Ps.P.:</strong> {{ historia.colegiatura_csp or 'N/A' }}
+        </div>
+    </div>
+</div>
+
+<!-- Sesiones de Evolución Registradas -->
+<div class="card-panel">
+    <div class="card-header">
+        <h2 class="card-title">
+            <i class="fa-solid fa-notes-medical"></i> Sesiones de Evolución Clínica ({{ historia.sesiones_evolucion|length }})
+        </h2>
+        {% if current_user_role in ['Administrador', 'Especialista'] %}
+        <a href="{{ url_for('sesiones') }}" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-plus"></i> Registrar Nueva Sesión
+        </a>
+        {% endif %}
+    </div>
+
+    {% if historia.sesiones_evolucion %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for s in historia.sesiones_evolucion | sort(attribute='fecha_sesion', reverse=True) %}
+        <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: #ffffff;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">
+                <span><strong>Sesión #{{ s.id_sesion }}</strong></span>
+                <span><i class="fa-regular fa-clock"></i> {{ s.fecha_sesion.strftime('%d/%m/%Y - %H:%M hrs') }}</span>
+            </div>
+            <div style="margin-bottom: 0.5rem;">
+                <strong style="color: var(--primary);">Evolución Clínica:</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.evolucion_clinica }}</p>
+            </div>
+            {% if s.observaciones_conductuales %}
+            <div>
+                <strong>Observaciones Conductuales:</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.observaciones_conductuales }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+        No hay sesiones de evolución asociadas a esta historia clínica.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

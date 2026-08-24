@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Consultorio Psicológico{% endblock %}
+
+{% block content %}
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Bienvenido(a), {{ current_user_name }}</h1>
+        <p class="page-subtitle">Panel de gestión y resumen general del consultorio</p>
+    </div>
+</div>
+
+<!-- Tarjetas de Métricas -->
+<div class="metrics-grid">
+    {% if current_user_role in ['Administrador', 'Recepcionista'] %}
+    <div class="metric-card">
+        <span class="metric-label">Total Usuarios</span>
+        <span class="metric-value">{{ total_usuarios }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-label">Clientes / Pacientes</span>
+        <span class="metric-value">{{ total_clientes }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-label">Especialistas</span>
+        <span class="metric-value">{{ total_especialistas }}</span>
+    </div>
+    {% endif %}
+
+    <div class="metric-card">
+        <span class="metric-label">Citas Programadas</span>
+        <span class="metric-value" style="color: var(--primary);">{{ citas_programadas }}</span>
+    </div>
+
+    <div class="metric-card">
+        <span class="metric-label">Citas Completadas</span>
+        <span class="metric-value" style="color: var(--success);">{{ citas_completadas }}</span>
+    </div>
+
+    {% if current_user_role in ['Administrador', 'Especialista'] %}
+    <div class="metric-card">
+        <span class="metric-label">Historias Clínicas</span>
+        <span class="metric-value">{{ total_historias }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Tabla de Próximas Citas -->
+<div class="card-panel">
+    <div class="card-header">
+        <h2 class="card-title">Próximas Citas Agendadas</h2>
+        <a href="{{ url_for('citas') }}" class="btn btn-secondary btn-sm">Ver Todas las Citas</a>
+    </div>
+
+    {% if citas %}
+    <div class="table-responsive">
+        <table class="custom-table">
+            <thead>
+                <tr>
+                    <th># Cita</th>
+                    <th>Cliente / Paciente</th>
+                    <th>Especialista</th>
+                    <th>Fecha y Hora</th>
+                    <th>Estado</th>
+                    <th>Motivo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cita in citas %}
+                <tr>
+                    <td><strong>#{{ cita.id_cita }}</strong></td>
+                    <td>{{ cita.cliente.nombres_apellidos }}</td>
+                    <td>{{ cita.especialista.nombres_apellidos }}</td>
+                    <td>{{ cita.fecha_hora.strftime('%d/%m/%Y - %H:%M hrs') }}</td>
+                    <td>
+                        <span class="badge badge-{{ cita.estado | lower }}">
+                            {{ cita.estado }}
+                        </span>
+                    </td>
+                    <td>{{ cita.motivo or 'Sin especificar' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p style="color: var(--text-muted); font-size: 0.9rem; text-align: center; padding: 1.5rem 0;">
+        No hay citas agendadas registradas en el sistema.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}
