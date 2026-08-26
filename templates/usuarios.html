@@ -65,6 +65,7 @@
                     <th>Correo Electrónico</th>
                     <th>Rol Asignado</th>
                     <th>Fecha Registro</th>
+                    <th>Acciones</th> <!-- <-- AQUÍ SE AGREGÓ EL ENCABEZADO -->
                 </tr>
             </thead>
             <tbody>
@@ -79,6 +80,13 @@
                         </span>
                     </td>
                     <td>{{ u.fecha_registro.strftime('%d/%m/%Y %H:%M') if u.fecha_registro else 'N/A' }}</td>
+                    <td>
+                        <!-- AQUÍ SE AGREGARON LOS BOTONES DE ACCIÓN -->
+                        <a href="{{ url_for('editar_usuario', id_usuario=u.id_usuario) }}" class="btn btn-sm btn-primary">Editar</a>
+                        <form action="{{ url_for('eliminar_usuario', id_usuario=u.id_usuario) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                        </form>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
