@@ -98,12 +98,7 @@ class HistoriaClinica(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relación con sesiones de evolución
-    sesiones_evolucion = db.relationship(
-        'SesionEvolucion', 
-        backref='historia_clinica', 
-        lazy=True, 
-        cascade="all, delete-orphan"
-    )
+    sesiones_evolucion = db.relationship('SesionEvolucion', backref='historia_clinica', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return f"<HistoriaClinica #{self.id_historia} Cliente:{self.id_cliente}>"
@@ -113,7 +108,6 @@ class SesionEvolucion(db.Model):
     __tablename__ = 'ren_sesiones_evolucion'
 
     id_sesion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    # ESTA ES LA LÍNEA CORREGIDA: Apunta a la historia clínica
     id_historia = db.Column(db.Integer, db.ForeignKey('ren_historias_clinicas.id_historia'), nullable=False) 
     fecha_sesion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     evolucion_clinica = db.Column(db.Text, nullable=False)
