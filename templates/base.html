@@ -27,7 +27,7 @@
                     </a>
                 </li>
 
-                {% if current_user_role in ['Administrador', 'Recepcionista'] %}
+                {% if current_user_role in ['Director', 'Administrador', 'Recepcionista'] %}
                 <li class="nav-item {% if request.endpoint == 'usuarios' %}active{% endif %}">
                     <a href="{{ url_for('usuarios') }}">
                         <i class="fa-solid fa-users-gear"></i>
@@ -43,7 +43,7 @@
                     </a>
                 </li>
 
-                {% if current_user_role in ['Administrador', 'Especialista', 'Recepcionista', 'Cliente'] %}
+                {% if current_user_role in ['Administrador', 'Especialista', 'Paciente'] %}
                 <li class="nav-item {% if request.endpoint in ['historias', 'ver_historia'] %}active{% endif %}">
                     <a href="{{ url_for('historias') }}">
                         <i class="fa-solid fa-file-medical"></i>
