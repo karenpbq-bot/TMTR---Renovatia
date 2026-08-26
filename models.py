@@ -53,7 +53,7 @@ class Cita(db.Model):
 
     id_cita = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False)
-id_especialista = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False)
+    id_especialista = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False)
     fecha_hora = db.Column(db.DateTime, nullable=False)
     estado = db.Column(db.String(30), nullable=False, default='Programada')
     motivo = db.Column(db.String(255), nullable=True)
