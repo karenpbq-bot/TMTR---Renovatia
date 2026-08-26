@@ -52,8 +52,8 @@ class Cita(db.Model):
     __tablename__ = 'ren_citas'
 
     id_cita = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False) # <-- NUEVO
-    id_especialista = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False) # <-- NUEVO
+    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False)
+id_especialista = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False)
     fecha_hora = db.Column(db.DateTime, nullable=False)
     estado = db.Column(db.String(30), nullable=False, default='Programada')
     motivo = db.Column(db.String(255), nullable=True)
@@ -66,7 +66,7 @@ class HistoriaClinica(db.Model):
     __tablename__ = 'ren_historias_clinicas'
 
     id_historia = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False, unique=True) # <-- NUEVO
+    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False, unique=True)
     
     # Datos de Ficha de Identificación
     fecha_nacimiento = db.Column(db.Date, nullable=True)
@@ -113,7 +113,8 @@ class SesionEvolucion(db.Model):
     __tablename__ = 'ren_sesiones_evolucion'
 
     id_sesion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False, unique=True) # <-- NUEVO
+    # ESTA ES LA LÍNEA CORREGIDA: Apunta a la historia clínica
+    id_historia = db.Column(db.Integer, db.ForeignKey('ren_historias_clinicas.id_historia'), nullable=False) 
     fecha_sesion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     evolucion_clinica = db.Column(db.Text, nullable=False)
     observaciones_conductuales = db.Column(db.Text, nullable=True)
