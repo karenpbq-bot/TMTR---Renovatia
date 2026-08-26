@@ -1,1 +1,31 @@
-
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Editar Usuario: {{ usuario.nombres_apellidos }}</h2>
+    <hr>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Nombres y Apellidos</label>
+            <input type="text" name="nombres_apellidos" class="form-control" value="{{ usuario.nombres_apellidos }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Correo Electrónico</label>
+            <input type="email" name="correo" class="form-control" value="{{ usuario.correo }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Rol del Usuario</label>
+            <select name="rol" class="form-control" required>
+                {% for r in roles_permitidos %}
+                    <option value="{{ r }}" {% if usuario.rol == r %}selected{% endif %}>{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Nueva Contraseña (Opcional)</label>
+            <input type="password" name="password" class="form-control" placeholder="Dejar en blanco para mantener la actual">
+        </div>
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        <a href="{{ url_for('usuarios') }}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
