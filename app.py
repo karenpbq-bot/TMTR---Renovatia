@@ -8,6 +8,22 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+# --- CREACIÓN AUTOMÁTICA DEL ADMINISTRADOR AL ARRANCAR ---
+with app.app_context():
+    db.create_all()
+    admin_email = "kbarrientosq.2604@gmail.com"
+    admin_user = Usuario.query.filter_by(correo=admin_email).first()
+    if not admin_user:
+        nuevo_admin = Usuario(
+            nombres_apellidos="Karen Paola Barrientos",
+            correo=admin_email,
+            rol="Administrador"
+        )
+        nuevo_admin.set_password("admin123")
+        db.session.add(nuevo_admin)
+        db.session.commit()
+        print("¡Cuenta Administrador creada exitosamente en la BD activa!")
+
 # --- Decoradores de Seguridad y Autenticación ---
 def login_required(f):
     @wraps(f)
