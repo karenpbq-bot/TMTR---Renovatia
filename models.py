@@ -98,7 +98,7 @@ class HistoriaClinica(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relación con sesiones de evolución
-    sesiones_evolucion = db.relationship('SesionEvolucion', backref='historia_clinica', cascade='all, delete-orphan'))
+    sesiones_evolucion = db.relationship('SesionEvolucion', backref='historia_clinica', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f"<HistoriaClinica #{self.id_historia} Cliente:{self.id_cliente}>"
