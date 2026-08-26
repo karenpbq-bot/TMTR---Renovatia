@@ -8,7 +8,7 @@ ROLES_PERMITIDOS = ['Administrador', 'Recepcionista', 'Especialista', 'Cliente']
 ESTADOS_CITA = ['Programada', 'Completada', 'Cancelada']
 
 class Usuario(db.Model):
-    __tablename__ = 'usuarios'
+    __tablename__ = 'ren_usuarios'
 
     id_usuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombres_apellidos = db.Column(db.String(150), nullable=False)
@@ -49,11 +49,11 @@ class Usuario(db.Model):
 
 
 class Cita(db.Model):
-    __tablename__ = 'citas'
+    __tablename__ = 'ren_citas'
 
     id_cita = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
-    id_especialista = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False) # <-- NUEVO
+    id_especialista = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False) # <-- NUEVO
     fecha_hora = db.Column(db.DateTime, nullable=False)
     estado = db.Column(db.String(30), nullable=False, default='Programada')
     motivo = db.Column(db.String(255), nullable=True)
@@ -63,10 +63,10 @@ class Cita(db.Model):
 
 
 class HistoriaClinica(db.Model):
-    __tablename__ = 'historias_clinicas'
+    __tablename__ = 'ren_historias_clinicas'
 
     id_historia = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('usuarios.id_usuario'), nullable=False, unique=True)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False, unique=True) # <-- NUEVO
     
     # Datos de Ficha de Identificación
     fecha_nacimiento = db.Column(db.Date, nullable=True)
@@ -110,10 +110,10 @@ class HistoriaClinica(db.Model):
 
 
 class SesionEvolucion(db.Model):
-    __tablename__ = 'sesiones_evolucion'
+    __tablename__ = 'ren_sesiones_evolucion'
 
     id_sesion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_historia = db.Column(db.Integer, db.ForeignKey('historias_clinicas.id_historia'), nullable=False)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('ren_usuarios.id_usuario'), nullable=False, unique=True) # <-- NUEVO
     fecha_sesion = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     evolucion_clinica = db.Column(db.Text, nullable=False)
     observaciones_conductuales = db.Column(db.Text, nullable=True)
