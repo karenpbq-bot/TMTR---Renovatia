@@ -5,38 +5,34 @@ from config import Config
 from models import db, Usuario, Cita, HistoriaClinica, SesionEvolucion
 
 def init_db():
-    # Asegurar que el directorio de la base de datos exista
-    db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'database')
-    os.makedirs(db_path, exist_ok=True)
-
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
 
     with app.app_context():
-        print("🔨 Creando tablas de la base de datos (SQLite)...")
+        print("🔨 Verificando tablas de la base de datos...")
         db.create_all()
-        print("✅ Tablas creadas exitosamente.")
+        print("✅ Tablas listas.")
 
-        # 1. Crear Usuario Administrador por Defecto
-        admin_email = "admin@consultorio.com"
+        # 1. Crear tu cuenta Administrador Personal
+        admin_email = "kbarrientosq.2604@gmail.com"
         admin_user = Usuario.query.filter_by(correo=admin_email).first()
 
         if not admin_user:
-            print(f"👤 Creando usuario administrador por defecto: {admin_email}...")
+            print(f"👤 Creando cuenta administradora para: {admin_email}...")
             admin_user = Usuario(
-                nombres_apellidos="Administrador General",
+                nombres_apellidos="Karen Paola Barrientos",
                 correo=admin_email,
                 rol="Administrador"
             )
             admin_user.set_password("admin123")
             db.session.add(admin_user)
             db.session.commit()
-            print("✅ Usuario Administrador creado. (Correo: admin@consultorio.com | Clave: admin123)")
+            print("✅ ¡Cuenta Administrador creada exitosamente!")
         else:
-            print("ℹ️ El usuario Administrador ya existe en la base de datos.")
+            print("ℹ️ Tu cuenta de administrador ya se encuentra registrada.")
 
-        # 2. Datos de prueba opcionales para inicializar la experiencia
+        # 2. Datos de prueba opcionales
         sembrar_datos_ejemplo(db)
 
 def sembrar_datos_ejemplo(database):
@@ -128,7 +124,7 @@ def sembrar_datos_ejemplo(database):
             database.session.add(cita)
 
         database.session.commit()
-        print("🌱 Datos iniciales de demostración sembrados con éxito.")
+        print("🌱 Datos iniciales sembrados con éxito.")
 
 if __name__ == '__main__':
     init_db()
