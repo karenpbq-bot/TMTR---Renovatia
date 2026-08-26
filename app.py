@@ -128,12 +128,12 @@ def dashboard():
     user_id = session.get('user_id')
 
     # Métricas generales
-    total_usuarios = Usuario.query.count() if rol in ['Administrador', 'Recepcionista'] else 0
-    total_clientes = Usuario.query.filter_by(rol='Cliente').count()
+    total_pacientes = Usuario.query.filter_by(rol='Paciente').count()
+    total_usuarios = Usuario.query.count() if rol in ['Director', 'Administrador', 'Recepcionista'] else 0
     total_especialistas = Usuario.query.filter_by(rol='Especialista').count()
     
     # Citas según el rol autenticado
-    if rol == 'Cliente':
+    if rol == 'Paciente':
         citas = Cita.query.filter_by(id_cliente=user_id).order_by(Cita.fecha_hora.asc()).all()
     elif rol == 'Especialista':
         citas = Cita.query.filter_by(id_especialista=user_id).order_by(Cita.fecha_hora.asc()).all()
@@ -142,6 +142,20 @@ def dashboard():
 
     citas_programadas = sum(1 for c in citas if c.estado == 'Programada')
     citas_completadas = sum(1 for c in citas if c.estado == 'Completada')
+    
+    # Historias clínicas
+    total_historias = HistoriaClinica.query.count()
+
+    return render_template(
+        'dashboard.html',
+        citas=citas[:10],
+        citas_programadas=citas_programadas,
+        citas_completadas=citas_completadas,
+        total_pacientes=total_pacientes,
+        total_especialistas=total_especialistas,
+        total_historias=total_historias,
+        total_usuarios=total_usuarios
+    )
     
     # Historias clínicas
     total_historias = HistoriaClinica.query.count()
