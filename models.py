@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
 
-ROLES_PERMITIDOS = ['Administrador', 'Recepcionista', 'Especialista', 'Cliente']
+ROLES_PERMITIDOS = ['Director', 'Administrador', 'Recepcionista', 'Especialista', 'Paciente']
 ESTADOS_CITA = ['Programada', 'Completada', 'Cancelada']
 
 class Usuario(db.Model):
