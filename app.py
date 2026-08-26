@@ -99,17 +99,16 @@ def login():
             
             flash(f'¡Bienvenido(a), {usuario.nombres_apellidos} ({usuario.rol})!', 'success')
 
-            # Redirección personalizada según el rol del usuario
-            if usuario.rol == 'Administrador':
+            # Redirección personalizada según el rol
+            if usuario.rol in ['Director', 'Administrador']:
                 return redirect(url_for('dashboard'))
             elif usuario.rol == 'Recepcionista':
                 return redirect(url_for('citas'))
             elif usuario.rol == 'Especialista':
                 return redirect(url_for('historias'))
-            elif usuario.rol == 'Cliente':
+            elif usuario.rol == 'Paciente':
                 return redirect(url_for('dashboard'))
-            else:
-                return redirect(url_for('dashboard'))
+        
         else:
             flash('Credenciales inválidas. Por favor verifique su correo y contraseña.', 'danger')
     
