@@ -8,6 +8,30 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
+# --- CREACIÓN AUTOMÁTICA DEL ADMINISTRADOR PERSONAL ---
+with app.app_context():
+    db.create_all()
+    # Forzamos tu correo personal como el administrador principal del sistema
+    admin_email = "kbarrientosq.2604@gmail.com"
+    admin_user = Usuario.query.filter_by(correo=admin_email).first()
+    
+    if not admin_user:
+        nuevo_admin = Usuario(
+            nombres_apellidos="Karen Paola Barrientos",
+            correo=admin_email,
+            rol="Administrador"
+        )
+        nuevo_admin.set_password("admin123")
+        db.session.add(nuevo_admin)
+        db.session.commit()
+        print("¡Cuenta Administrador personal creada exitosamente!")
+    else:
+        # Asegurar que si ya existía, tenga la clave correcta y rol de Admin
+        admin_user.rol = "Administrador"
+        admin_user.set_password("admin123")
+        db.session.commit()
+        print("¡Cuenta Administrador verificada y actualizada!")
+
 # --- CREACIÓN AUTOMÁTICA DEL ADMINISTRADOR AL ARRANCAR ---
 with app.app_context():
     db.create_all()
