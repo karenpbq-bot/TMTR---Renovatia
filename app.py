@@ -151,6 +151,63 @@ def usuarios():
     lista_usuarios = Usuario.query.order_by(Usuario.id_usuario.desc()).all()
     return render_template('usuarios.html', usuarios=lista_usuarios)
 
+# --- Editar Usuario ---
+@app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+@login_required
+@role_required('Administrador')
+def editar_usuario(id_usuario):
+    usuario = Usuario.query.get_or_404(id_usuario)
+    
+    if request.method == 'POST':
+        nombres = request.form.get('nombres_apellidos', '').strip()
+        correo = request.form.get('correo', '').strip()
+        rol = request.form.get('rol')
+        password = request.form.get('password', '').strip()
+
+        if rol not in ROLES_PERMITIDOS:
+            flash('Rol no válido.', 'danger')
+            return redirect(url_for('editar_usuario', id_usuario=id_usuario))
+
+        # Verificar si el correo ya pertenece a otro usuario
+        usuario_existente = Usuario.query.filter_by(correo=correo).first()
+        if usuario_existente and usuario_existente.id_usuario != usuario.id_usuario:
+            flash('El correo ingresado ya está en uso por otro usuario.', 'warning')
+            return redirect(url_for('editar_usuario', id_usuario=id_usuario))
+
+        usuario.nombres_apellidos = nombres
+        usuario.correo = correo
+        usuario.rol = rol
+
+        if password:
+            usuario.set_password(password)
+
+        db.session.commit()
+        flash(f'Usuario "{nombres}" actualizado exitosamente.', 'success')
+        return redirect(url_for('usuarios'))
+
+    return render_template('usuario_editar.html', usuario=usuario)
+
+
+# --- Eliminar Usuario ---
+@app.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Administrador')
+def eliminar_usuario(id_usuario):
+    usuario = Usuario.query.get_or_404(id_usuario)
+
+    # Prevenir que un administrador elimine su propia cuenta activa por seguridad
+    if usuario.id_usuario == session.get('user_id'):
+        flash('No puedes eliminar tu propia cuenta de administrador.', 'danger')
+        return redirect(url_for('usuarios'))
+
+    nombre_borrado = usuario.nombres_apellidos
+    db.session.delete(usuario)
+    db.session.commit()
+    
+    flash(f'Usuario "{nombre_borrado}" eliminado correctamente.', 'info')
+    return redirect(url_for('usuarios'))
+
+
 # --- 2. Módulo de Historias Clínicas (Especialistas / Admisión) ---
 @app.route('/historias')
 @login_required
