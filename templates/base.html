@@ -52,7 +52,7 @@
                 </li>
                 {% endif %}
 
-                {% if current_user_role in ['Administrador', 'Especialista'] %}
+                {% if current_user_role in ['Director', 'Administrador', 'Especialista'] %}
                 <li class="nav-item {% if request.endpoint == 'sesiones' %}active{% endif %}">
                     <a href="{{ url_for('sesiones') }}">
                         <i class="fa-solid fa-notes-medical"></i>
