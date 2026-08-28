@@ -399,7 +399,7 @@ def atender_cita(id_cita):
     # Crear la sesión de evolución
     nueva_sesion = SesionEvolucion(
         id_historia=historia.id_historia,
-        fecha_sesion=datetime.now(),
+        fecha_sesion=get_peru_time(),
         evolucion_clinica=evolucion,
         observaciones_conductuales=observaciones
     )
