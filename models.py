@@ -1,4 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+def get_peru_time():
+    peru_tz = timezone(timedelta(hours=-5))
+    return datetime.now(peru_tz)
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 
