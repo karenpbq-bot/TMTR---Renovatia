@@ -8,21 +8,17 @@ from models import (
     HistoriaClinica, SesionEvolucion
 )
 
-# 1. PRIMERO SE CREA LA INSTANCIA DE APP
+# 1. ÚNICA CREACIÓN DE LA INSTANCIA DE APP
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
 
-# --- REGISTRO DE BLUEPRINTS (OBLIGATORIO) ---
+# --- REGISTRO DE BLUEPRINTS (MÓDULOS MODULARES) ---
 from routes_clientes import clientes_bp
 from routes_usuarios import usuarios_bp
 
 app.register_blueprint(clientes_bp)
 app.register_blueprint(usuarios_bp)
-
-app = Flask(__name__)
-app.config.from_object(Config)
-db.init_app(app)
 
 # --- CREACIÓN AUTOMÁTICA DEL SUPERADMIN / ADMIN PRINCIPAL ---
 with app.app_context():
@@ -170,158 +166,6 @@ def dashboard():
         total_usuarios=total_usuarios
     )
 
-# --- Módulo Avanzado de Gestión de Usuarios (Superadmin / Administrador) ---
-@app.route('/usuarios', methods=['GET', 'POST'])
-@login_required
-@role_required('Superadmin', 'Director', 'Administrador')
-def usuarios():
-    cliente_id_sesion = session.get('id_cliente')
-    rol_sesion = session.get('user_role')
-
-    # Capturar parámetros de búsqueda y filtros desde la URL (GET)
-    busqueda = request.args.get('q', '').strip()
-    filtro_rol = request.args.get('rol', '').strip()
-    filtro_cliente = request.args.get('id_cliente', '').strip()
-
-    if request.method == 'POST':
-        # Registro de nuevo usuario desde el panel
-        nombres = request.form.get('nombres_apellidos', '').strip()
-        correo = request.form.get('correo', '').strip()
-        dni = request.form.get('dni', '').strip()
-        rol = request.form.get('rol', 'Recepcionista')
-        
-        # Si es Superadmin puede asignar el cliente que elija; si es Admin, usa su propia clínica
-        id_cliente_form = request.form.get('id_cliente') if rol_sesion == 'Superadmin' else cliente_id_sesion
-
-        if UsuarioUni.query.filter_by(correo=correo).first():
-            flash('El correo ingresado ya se encuentra registrado en el sistema.', 'warning')
-        else:
-            nuevo_usuario = UsuarioUni(
-                id_cliente=id_cliente_form if id_cliente_form else None,
-                nombres_apellidos=nombres,
-                dni=dni,
-                correo=correo,
-                rol=rol
-            )
-            nuevo_usuario.set_password('clave123') # Contraseña inicial por defecto
-            db.session.add(nuevo_usuario)
-            db.session.commit()
-            flash(f'Usuario "{nombres}" registrado exitosamente con clave temporal "clave123".', 'success')
-
-        return redirect(url_for('usuarios'))
-
-    # Construcción de consulta dinámica con filtros
-    query = UsuarioUni.query
-
-    # Restricción multi-tenant si no es Superadmin
-    if rol_sesion != 'Superadmin':
-        query = query.filter_by(id_cliente=cliente_id_sesion)
-    elif filtro_cliente:
-        query = query.filter_by(id_cliente=filtro_cliente)
-
-    # Aplicar filtro por Rol
-    if filtro_rol:
-        query = query.filter_by(rol=filtro_rol)
-
-    # Aplicar búsqueda por texto (nombre o correo)
-    if busqueda:
-        termino = f"%{busqueda}%"
-        query = query.filter(
-            db.or_(
-                UsuarioUni.nombres_apellidos.ilike(termino),
-                UsuarioUni.correo.ilike(termino),
-                UsuarioUni.dni.ilike(termino)
-            )
-        )
-
-    lista_usuarios = query.order_by(UsuarioUni.id_usuario.desc()).all()
-    
-    # Obtener lista de clientes para los selectores de filtrado (útil para el Superadmin)
-    lista_clientes = ClienteEmpresa.query.all() if rol_sesion == 'Superadmin' else []
-
-    return render_template(
-        'usuarios.html',
-        usuarios=lista_usuarios,
-        clientes=lista_clientes,
-        busqueda=busqueda,
-        filtro_rol=filtro_rol,
-        filtro_cliente=filtro_cliente
-    )
-
-# --- Editar Usuario ---
-@app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
-@login_required
-@role_required('Superadmin', 'Director', 'Administrador')
-def editar_usuario(id_usuario):
-    usuario = UsuarioUni.query.get_or_404(id_usuario)
-    rol_sesion = session.get('user_role')
-
-    # Control de aislamiento multi-tenant
-    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
-        flash('No tiene autorización para modificar este usuario.', 'danger')
-        return redirect(url_for('usuarios'))
-
-    if request.method == 'POST':
-        usuario.nombres_apellidos = request.form.get('nombres_apellidos', '').strip()
-        usuario.correo = request.form.get('correo', '').strip()
-        usuario.dni = request.form.get('dni', '').strip()
-        usuario.rol = request.form.get('rol', usuario.rol)
-        
-        if rol_sesion == 'Superadmin':
-            id_cli = request.form.get('id_cliente')
-            usuario.id_cliente = id_cli if id_cli else None
-
-        db.session.commit()
-        flash(f'Datos del usuario "{usuario.nombres_apellidos}" actualizados correctamente.', 'success')
-        return redirect(url_for('usuarios'))
-
-    lista_clientes = ClienteEmpresa.query.all() if rol_sesion == 'Superadmin' else []
-    return render_template('usuario_editar.html', usuario=usuario, clientes=lista_clientes)
-
-# --- Generar Contraseña Temporal (Recuperación por Olvido) ---
-@app.route('/usuarios/reset-password/<int:id_usuario>', methods=['POST'])
-@login_required
-@role_required('Superadmin', 'Director', 'Administrador')
-def reset_password(id_usuario):
-    usuario = UsuarioUni.query.get_or_404(id_usuario)
-    rol_sesion = session.get('user_role')
-
-    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
-        flash('No autorizado.', 'danger')
-        return redirect(url_for('usuarios'))
-
-    # Generar clave temporal estándar
-    clave_temporal = "Temp2026*"
-    usuario.set_password(clave_temporal)
-    db.session.commit()
-
-    flash(f'Contraseña restablecida con éxito para {usuario.nombres_apellidos}. La nueva clave temporal es: {clave_temporal}', 'warning')
-    return redirect(url_for('usuarios'))
-
-# --- Eliminar Usuario ---
-@app.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
-@login_required
-@role_required('Superadmin', 'Director', 'Administrador')
-def eliminar_usuario(id_usuario):
-    usuario = UsuarioUni.query.get_or_404(id_usuario)
-
-    # Prevenir que un administrador elimine su propia cuenta activa
-    if usuario.id_usuario == session.get('user_id'):
-        flash('Por seguridad, no puedes eliminar tu propia cuenta activa.', 'danger')
-        return redirect(url_for('usuarios'))
-
-    rol_sesion = session.get('user_role')
-    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
-        flash('No autorizado para eliminar este usuario.', 'danger')
-        return redirect(url_for('usuarios'))
-
-    nombre_borrado = usuario.nombres_apellidos
-    db.session.delete(usuario)
-    db.session.commit()
-    
-    flash(f'Usuario "{nombre_borrado}" eliminado correctamente.', 'info')
-    return redirect(url_for('usuarios'))
-
 # --- Módulo de Historias Clínicas (Psicología: psi_) ---
 @app.route('/historias')
 @login_required
@@ -405,7 +249,6 @@ def citas():
 
         try:
             fecha_hora_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
-            # Por defecto asumimos una duración estándar de 45 minutos
             from datetime import timedelta
             fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=45)
 
@@ -437,9 +280,7 @@ def citas():
 
     return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
-# ==========================================
-# NUEVO MÓDULO DE SESIONES
-# ==========================================
+# --- Módulo de Sesiones de Evolución ---
 @app.route('/sesiones')
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
@@ -450,12 +291,10 @@ def sesiones():
     if rol == 'Superadmin':
         lista_sesiones = SesionEvolucion.query.all()
     else:
-        # Filtrar sesiones de evolución vinculadas a los pacientes de la empresa actual
         lista_sesiones = SesionEvolucion.query.join(HistoriaClinica).join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).all()
 
     return render_template('sesiones.html', sesiones=lista_sesiones)
 
-# --- Módulo de Sesiones de Evolución (psi_sesiones_evolucion) ---
 @app.route('/citas/<int:id_cita>/atender', methods=['POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
