@@ -59,14 +59,29 @@ def role_required(*roles):
         return decorated_function
     return decorator
 
-# Context Processor para disponibilizar variables globales en plantillas
+# --- Context Processor blindado para evitar errores 500 ---
 @app.context_processor
 def inject_globals():
+    cliente_nombre = "Psicolapp / Tamtara"
+    cliente_id = session.get('id_cliente')
+    
+    try:
+        if cliente_id:
+            from models import ClienteEmpresa
+            cliente_obj = ClienteEmpresa.query.get(cliente_id)
+            if cliente_obj:
+                cliente_nombre = cliente_obj.nombre_marca
+        elif session.get('user_role') == 'Superadmin':
+            cliente_nombre = "TAMTARA (Superadmin)"
+    except Exception as e:
+        print(f"Error en context_processor: {e}")
+
     return {
         'current_user_name': session.get('user_name'),
         'current_user_role': session.get('user_role'),
         'current_user_id': session.get('user_id'),
-        'current_cliente_id': session.get('id_cliente')
+        'current_cliente_id': cliente_id,
+        'current_cliente_nombre': cliente_nombre
     }
 
 # --- 1. Sistema de Autenticación y Redirección Multi-Tenant ---
