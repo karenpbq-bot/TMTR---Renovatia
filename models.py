@@ -29,15 +29,19 @@ class ClienteEmpresa(db.Model):
     tipo_especialidad = db.Column(db.String(50), nullable=False, default='Psicología')
     estado = db.Column(db.Boolean, default=True)
 
-    # Información Comercial y de Marca
-    nombre_empresa = db.Column(db.String(150), nullable=False)
+    # Información Comercial y de Marca (Sincronizado con formularios y rutas)
+    nombre_empresa = db.Column(db.String(150), nullable=True)
     nombre_marca = db.Column(db.String(100), nullable=False)
-    ruc = db.Column(db.String(20), unique=True, nullable=False)
+    ruc = db.Column(db.String(20), unique=True, nullable=True)
+    razon_social = db.Column(db.String(150), nullable=True)      # <-- Incorporado formalmente
+    direccion = db.Column(db.String(255), nullable=True)          # <-- Incorporado para formularios
+    telefono = db.Column(db.String(50), nullable=True)            # <-- Incorporado para formularios
+    correo_contacto = db.Column(db.String(120), nullable=True)    # <-- Incorporado para formularios
     logo_url = db.Column(db.String(255), nullable=True) # Supabase Storage
 
-    # Datos de Contacto
-    representante = db.Column(db.String(150), nullable=False)
-    contacto_correo = db.Column(db.String(120), nullable=False)
+    # Datos de Contacto y Representante
+    representante = db.Column(db.String(150), nullable=True)
+    contacto_correo = db.Column(db.String(120), nullable=True)
     contacto_telefono = db.Column(db.String(20), nullable=True)
 
     # Gestión de Planes y Facturación
@@ -45,6 +49,7 @@ class ClienteEmpresa(db.Model):
     vigencia_plan = db.Column(db.Date, nullable=True)
     costo_plan = db.Column(db.Numeric(10, 2), nullable=True)
     modo_pago = db.Column(db.String(50), nullable=True)
+    estado_suscripcion = db.Column(db.String(20), default='Activo') # <-- Incorporado para gestión de estado
     fecha_creacion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
 
     # Relaciones Multi-Tenant
@@ -206,10 +211,8 @@ class CitaUni(db.Model):
 
     reprogramaciones = db.relationship('ReprogramacionUni', backref='cita', lazy=True, cascade="all, delete-orphan")
 
-    # --- Propiedad puente para compatibilidad con el template antiguo ---
     @property
     def cliente(self):
-        """Permite que cita.cliente apunte al paciente en las plantillas antiguas"""
         return self.paciente
 
     @property
@@ -297,6 +300,3 @@ class SesionEvolucion(db.Model):
     fecha_sesion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
     evolucion_clinica = db.Column(db.Text, nullable=False)
     observaciones_conductuales = db.Column(db.Text, nullable=True)
-
-    def __repr__(self):
-        return f"<SesionEvolucion #{self.id_sesion} Historia:{self.id_historia}>"
