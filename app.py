@@ -143,41 +143,157 @@ def dashboard():
         total_usuarios=total_usuarios
     )
 
-# --- Módulo de Usuarios (Administrador / Recepcionista) ---
+# --- Módulo Avanzado de Gestión de Usuarios (Superadmin / Administrador) ---
 @app.route('/usuarios', methods=['GET', 'POST'])
 @login_required
-@role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista')
+@role_required('Superadmin', 'Director', 'Administrador')
 def usuarios():
-    cliente_id = session.get('id_cliente')
-    
+    cliente_id_sesion = session.get('id_cliente')
+    rol_sesion = session.get('user_role')
+
+    # Capturar parámetros de búsqueda y filtros desde la URL (GET)
+    busqueda = request.args.get('q', '').strip()
+    filtro_rol = request.args.get('rol', '').strip()
+    filtro_cliente = request.args.get('id_cliente', '').strip()
+
     if request.method == 'POST':
+        # Registro de nuevo usuario desde el panel
         nombres = request.form.get('nombres_apellidos', '').strip()
         correo = request.form.get('correo', '').strip()
-        password = request.form.get('password', '')
+        dni = request.form.get('dni', '').strip()
         rol = request.form.get('rol', 'Recepcionista')
+        
+        # Si es Superadmin puede asignar el cliente que elija; si es Admin, usa su propia clínica
+        id_cliente_form = request.form.get('id_cliente') if rol_sesion == 'Superadmin' else cliente_id_sesion
 
         if UsuarioUni.query.filter_by(correo=correo).first():
-            flash('El correo ingresado ya se encuentra registrado.', 'warning')
+            flash('El correo ingresado ya se encuentra registrado en el sistema.', 'warning')
         else:
             nuevo_usuario = UsuarioUni(
-                id_cliente=cliente_id,
+                id_cliente=id_cliente_form if id_cliente_form else None,
                 nombres_apellidos=nombres,
+                dni=dni,
                 correo=correo,
                 rol=rol
             )
-            nuevo_usuario.set_password(password if password else 'clave123')
+            nuevo_usuario.set_password('clave123') # Contraseña inicial por defecto
             db.session.add(nuevo_usuario)
             db.session.commit()
-            flash(f'Usuario "{nombres}" registrado con éxito.', 'success')
+            flash(f'Usuario "{nombres}" registrado exitosamente con clave temporal "clave123".', 'success')
 
         return redirect(url_for('usuarios'))
 
-    if session.get('user_role') == 'Superadmin':
-        lista_usuarios = UsuarioUni.query.order_by(UsuarioUni.id_usuario.desc()).all()
-    else:
-        lista_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id).order_by(UsuarioUni.id_usuario.desc()).all()
+    # Construcción de consulta dinámica con filtros
+    query = UsuarioUni.query
 
-    return render_template('usuarios.html', usuarios=lista_usuarios)
+    # Restricción multi-tenant si no es Superadmin
+    if rol_sesion != 'Superadmin':
+        query = query.filter_by(id_cliente=cliente_id_sesion)
+    elif filtro_cliente:
+        query = query.filter_by(id_cliente=filtro_cliente)
+
+    # Aplicar filtro por Rol
+    if filtro_rol:
+        query = query.filter_by(rol=filtro_rol)
+
+    # Aplicar búsqueda por texto (nombre o correo)
+    if busqueda:
+        termino = f"%{busqueda}%"
+        query = query.filter(
+            db.or_(
+                UsuarioUni.nombres_apellidos.ilike(termino),
+                UsuarioUni.correo.ilike(termino),
+                UsuarioUni.dni.ilike(termino)
+            )
+        )
+
+    lista_usuarios = query.order_by(UsuarioUni.id_usuario.desc()).all()
+    
+    # Obtener lista de clientes para los selectores de filtrado (útil para el Superadmin)
+    lista_clientes = ClienteEmpresa.query.all() if rol_sesion == 'Superadmin' else []
+
+    return render_template(
+        'usuarios.html',
+        usuarios=lista_usuarios,
+        clientes=lista_clientes,
+        busqueda=busqueda,
+        filtro_rol=filtro_rol,
+        filtro_cliente=filtro_cliente
+    )
+
+# --- Editar Usuario ---
+@app.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def editar_usuario(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    rol_sesion = session.get('user_role')
+
+    # Control de aislamiento multi-tenant
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No tiene autorización para modificar este usuario.', 'danger')
+        return redirect(url_for('usuarios'))
+
+    if request.method == 'POST':
+        usuario.nombres_apellidos = request.form.get('nombres_apellidos', '').strip()
+        usuario.correo = request.form.get('correo', '').strip()
+        usuario.dni = request.form.get('dni', '').strip()
+        usuario.rol = request.form.get('rol', usuario.rol)
+        
+        if rol_sesion == 'Superadmin':
+            id_cli = request.form.get('id_cliente')
+            usuario.id_cliente = id_cli if id_cli else None
+
+        db.session.commit()
+        flash(f'Datos del usuario "{usuario.nombres_apellidos}" actualizados correctamente.', 'success')
+        return redirect(url_for('usuarios'))
+
+    lista_clientes = ClienteEmpresa.query.all() if rol_sesion == 'Superadmin' else []
+    return render_template('usuario_editar.html', usuario=usuario, clientes=lista_clientes)
+
+# --- Generar Contraseña Temporal (Recuperación por Olvido) ---
+@app.route('/usuarios/reset-password/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def reset_password(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    rol_sesion = session.get('user_role')
+
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No autorizado.', 'danger')
+        return redirect(url_for('usuarios'))
+
+    # Generar clave temporal estándar
+    clave_temporal = "Temp2026*"
+    usuario.set_password(clave_temporal)
+    db.session.commit()
+
+    flash(f'Contraseña restablecida con éxito para {usuario.nombres_apellidos}. La nueva clave temporal es: {clave_temporal}', 'warning')
+    return redirect(url_for('usuarios'))
+
+# --- Eliminar Usuario ---
+@app.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def eliminar_usuario(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+
+    # Prevenir que un administrador elimine su propia cuenta activa
+    if usuario.id_usuario == session.get('user_id'):
+        flash('Por seguridad, no puedes eliminar tu propia cuenta activa.', 'danger')
+        return redirect(url_for('usuarios'))
+
+    rol_sesion = session.get('user_role')
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No autorizado para eliminar este usuario.', 'danger')
+        return redirect(url_for('usuarios'))
+
+    nombre_borrado = usuario.nombres_apellidos
+    db.session.delete(usuario)
+    db.session.commit()
+    
+    flash(f'Usuario "{nombre_borrado}" eliminado correctamente.', 'info')
+    return redirect(url_for('usuarios'))
 
 # --- Módulo de Historias Clínicas (Psicología: psi_) ---
 @app.route('/historias')
