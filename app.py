@@ -425,6 +425,24 @@ def citas():
 
     return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
+# ==========================================
+# NUEVO MÓDULO DE SESIONES
+# ==========================================
+@app.route('/sesiones')
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
+def sesiones():
+    cliente_id = session.get('id_cliente')
+    rol = session.get('user_role')
+    
+    if rol == 'Superadmin':
+        lista_sesiones = SesionEvolucion.query.all()
+    else:
+        # Filtrar sesiones de evolución vinculadas a los pacientes de la empresa actual
+        lista_sesiones = SesionEvolucion.query.join(HistoriaClinica).join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).all()
+
+    return render_template('sesiones.html', sesiones=lista_sesiones)
+
 # --- Módulo de Sesiones de Evolución (psi_sesiones_evolucion) ---
 @app.route('/citas/<int:id_cita>/atender', methods=['POST'])
 @login_required
