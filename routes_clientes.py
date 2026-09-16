@@ -31,7 +31,6 @@ def gestionar_clientes():
     if request.method == 'POST':
         nombre_marca = request.form.get('nombre_marca', '').strip()
         ruc = request.form.get('ruc', '').strip()
-        razon_social = request.form.get('razon_social', '').strip()
         direccion = request.form.get('direccion', '').strip()
         telefono = request.form.get('telefono', '').strip()
         correo_contacto = request.form.get('correo_contacto', '').strip()
@@ -42,7 +41,6 @@ def gestionar_clientes():
             nuevo_cliente = ClienteEmpresa(
                 nombre_marca=nombre_marca,
                 ruc=ruc if ruc else None,
-                razon_social=razon_social if razon_social else None,
                 direccion=direccion if direccion else None,
                 telefono=telefono if telefono else None,
                 correo_contacto=correo_contacto if correo_contacto else None,
@@ -50,9 +48,26 @@ def gestionar_clientes():
             )
             db.session.add(nuevo_cliente)
             db.session.commit()
-            flash(f'Empresa cliente "{nombre_marca}" registrada exitosamente.', 'success')
+            flash(f'Empresa cliente "{nombre_marca}" registrada exitosamente en Supabase.', 'success')
         
         return redirect(url_for('clientes.gestionar_clientes'))
 
     clientes = ClienteEmpresa.query.order_by(ClienteEmpresa.id_cliente.desc()).all()
     return render_template('clientes.html', clientes=clientes)
+
+@clientes_bp.route('/clientes/editar/<int:id_cliente>', methods=['POST'])
+@login_required
+@role_required('Superadmin')
+def editar_cliente(id_cliente):
+    cliente = ClienteEmpresa.query.get_or_404(id_cliente)
+    
+    cliente.nombre_marca = request.form.get('nombre_marca', '').strip()
+    cliente.ruc = request.form.get('ruc', '').strip()
+    cliente.direccion = request.form.get('direccion', '').strip()
+    cliente.telefono = request.form.get('telefono', '').strip()
+    cliente.correo_contacto = request.form.get('correo_contacto', '').strip()
+    cliente.estado_suscripcion = request.form.get('estado_suscripcion', 'Activo')
+
+    db.session.commit()
+    flash(f'Datos de la empresa "{cliente.nombre_marca}" actualizados correctamente.', 'success')
+    return redirect(url_for('clientes.gestionar_clientes'))
