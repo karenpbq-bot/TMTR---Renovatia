@@ -7,6 +7,9 @@ from models import (
     PacienteUni, DisponibilidadUni, CitaUni, ReprogramacionUni, 
     HistoriaClinica, SesionEvolucion
 )
+# Importar el blueprint de clientes
+from routes_clientes import clientes_bp
+app.register_blueprint(clientes_bp)
 
 app = Flask(__name__)
 app.config.from_object(Config)
