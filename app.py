@@ -7,7 +7,13 @@ from models import (
     PacienteUni, DisponibilidadUni, CitaUni, ReprogramacionUni, 
     HistoriaClinica, SesionEvolucion
 )
-# --- Registro de Módulos (Blueprints) ---
+
+# 1. PRIMERO SE CREA LA INSTANCIA DE APP
+app = Flask(__name__)
+app.config.from_object(Config)
+db.init_app(app)
+
+# 2. DESPUÉS SE REGISTRAN LOS BLUEPRINTS (Módulos)
 from routes_clientes import clientes_bp
 from routes_usuarios import usuarios_bp
 
