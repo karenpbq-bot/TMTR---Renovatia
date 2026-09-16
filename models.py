@@ -200,11 +200,24 @@ class CitaUni(db.Model):
     
     fecha_hora_inicio = db.Column(db.DateTime(timezone=True), nullable=False)
     fecha_hora_fin = db.Column(db.DateTime(timezone=True), nullable=False)
-    estado_cita = db.Column(db.String(50), nullable=False, default='Programada') # 'Programada', 'Confirmada', 'Completada', 'Cancelada', 'Reprogramada'
+    estado_cita = db.Column(db.String(50), nullable=False, default='Programada')
     motivo_reserva = db.Column(db.Text, nullable=True)
     creado_en = db.Column(db.DateTime(timezone=True), default=get_peru_time)
 
     reprogramaciones = db.relationship('ReprogramacionUni', backref='cita', lazy=True, cascade="all, delete-orphan")
+
+    # --- Propiedades puente de compatibilidad con plantillas antiguas ---
+    @property
+    def fecha_hora(self):
+        return self.fecha_hora_inicio
+
+    @property
+    def estado(self):
+        return self.estado_cita
+
+    @property
+    def motivo(self):
+        return self.motivo_reserva
 
     def __repr__(self):
         return f"<CitaUni #{self.id_cita} Estado:{self.estado_cita}>"
