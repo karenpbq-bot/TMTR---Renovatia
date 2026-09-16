@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, ClienteEmpresa, UsuarioUni
+from models import db, ClienteEmpresa
 from functools import wraps
 
 clientes_bp = Blueprint('clientes', __name__, template_folder='templates')
@@ -51,6 +51,7 @@ def gestionar_clientes():
             db.session.add(nuevo_cliente)
             db.session.commit()
             flash(f'Empresa cliente "{nombre_marca}" registrada exitosamente.', 'success')
+        
         return redirect(url_for('clientes.gestionar_clientes'))
 
     clientes = ClienteEmpresa.query.order_by(ClienteEmpresa.id_cliente.desc()).all()
