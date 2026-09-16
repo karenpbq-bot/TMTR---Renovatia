@@ -1,50 +1,44 @@
-{% extends 'base.html' %}
-
-{% block title %}Iniciar Sesión - Renovatia{% endblock %}
-
-{% block login_content %}
-<div class="login-wrapper">
-    <div class="login-card">
-        <div class="login-header">
-            <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 48px; height: 48px; font-size: 1.5rem;">
-                <i class="fa-solid fa-brain"></i>
+{% extends "base.html" %}
+{% block content %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="card shadow-lg p-4 border-0 rounded-4" style="width: 100%; max-width: 420px;">
+        <div class="text-center mb-4">
+            <!-- Logotipo de la plataforma SaaS -->
+            <div class="bg-dark text-white rounded-3 py-3 px-4 mb-3 d-inline-block shadow-sm">
+                <h2 class="fw-bold tracking-wider mb-0 text-uppercase" style="letter-spacing: 2px;">TAMTARA</h2>
             </div>
-            <h1 class="login-title">Renovatia</h1>
-            <p class="page-subtitle" style="margin-top: 0.25rem;">Centro de Salud Mental y Gestión Psicológica</p>
+            <h3 class="fw-bold text-primary">Psicolapp</h3>
+            <p class="text-muted small">Plataforma de Gestión Psicológica y Multi-Tenant</p>
         </div>
 
+        <!-- Mensajes Flash corregidos con etiquetas Jinja -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div class="alerts-container">
                 {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    <span>{{ message }}</span>
-                </div>
+                    <div class="alert alert-{{ category }} alert-dismissible fade show small" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
-            </div>
             {% endif %}
         {% endwith %}
 
-        <form action="{{ url_for('login') }}" method="POST">
-            <div class="form-group">
-                <label for="correo" class="form-label">Correo Electrónico</label>
-                <input type="email" id="correo" name="correo" class="form-control" placeholder="ejemplo@consultorio.com" required autofocus>
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-3">
+                <label for="correo" class="form-label fw-semibold small">Correo Electrónico</label>
+                <input type="email" class="form-control" id="correo" name="correo" placeholder="nombre@correo.com" required autofocus>
             </div>
 
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-                <label for="password" class="form-label">Contraseña</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+            <div class="mb-3">
+                <label for="password" class="form-label fw-semibold small">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem;">
-                <i class="fa-solid fa-right-to-bracket"></i>
-                <span>Ingresar al Sistema</span>
-            </button>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">Iniciar Sesión</button>
         </form>
 
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-muted); text-align: center;">
-            <p>Acceso por defecto de prueba:</p>
-            <p><strong>Admin:</strong> admin@consultorio.com | <strong>Clave:</strong> admin123</p>
+        <div class="text-center mt-4">
+            <small class="text-muted">© 2026 Psicolapp — Powered by Tamtara</small>
         </div>
     </div>
 </div>
