@@ -94,7 +94,8 @@
         </main>
     </div>
     {% else %}
-        {% block login_content %}{% endblock %}
+        <!-- Bloque unificado para el login -->
+        {% block content %}{% endblock %}
     {% endif %}
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
