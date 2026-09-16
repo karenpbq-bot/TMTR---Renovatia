@@ -20,13 +20,6 @@ from routes_usuarios import usuarios_bp
 app.register_blueprint(clientes_bp)
 app.register_blueprint(usuarios_bp)
 
-# 2. DESPUÉS SE REGISTRAN LOS BLUEPRINTS (Módulos)
-from routes_clientes import clientes_bp
-from routes_usuarios import usuarios_bp
-
-app.register_blueprint(clientes_bp)
-app.register_blueprint(usuarios_bp)
-
 app = Flask(__name__)
 app.config.from_object(Config)
 db.init_app(app)
