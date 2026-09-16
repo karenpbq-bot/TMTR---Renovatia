@@ -1,96 +1,100 @@
-{% extends 'base.html' %}
-
-{% block title %}Gestión de Usuarios - Consultorio Psicológico{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-<div class="header-bar">
-    <div>
-        <h1 class="page-title">Gestión de Usuarios y Roles</h1>
-        <p class="page-subtitle">Administración de accesos con los 4 tipos de roles permitidos</p>
-    </div>
-    <button class="btn btn-primary" onclick="toggleModal('modalCrearUsuario')">
-        <i class="fa-solid fa-user-plus"></i>
-        <span>Nuevo Usuario</span>
-    </button>
-</div>
-
-<!-- Modal para Crear Usuario -->
-<div id="modalCrearUsuario" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
-    <div class="card-panel" style="width: 100%; max-width: 500px; margin: 0; animation: fadeIn 0.2s ease;">
-        <div class="card-header">
-            <h2 class="card-title">Registrar Nuevo Usuario</h2>
-            <button onclick="toggleModal('modalCrearUsuario')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2>Gestión de Usuarios</h2>
+            <p class="text-muted">Administración de accesos y roles del sistema</p>
         </div>
-        <form action="{{ url_for('usuarios') }}" method="POST">
-            <div class="form-group">
-                <label for="nombres_apellidos" class="form-label">Nombres y Apellidos</label>
-                <input type="text" id="nombres_apellidos" name="nombres_apellidos" class="form-control" required placeholder="Ej. Dra. Laura Ramírez">
-            </div>
-            
-            <div class="form-group">
-                <label for="correo" class="form-label">Correo Electrónico</label>
-                <input type="email" id="correo" name="correo" class="form-control" required placeholder="ejemplo@consultorio.com">
-            </div>
-
-            <div class="form-group">
-                <label for="password" class="form-label">Contraseña Inicial</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Por defecto: clave123">
-            </div>
-
-            <div class="form-group">
-                <label for="rol" class="form-label">Rol Asignado</label>
-                <select id="rol" name="rol" class="form-select" required>
-                    {% for r in roles_permitidos %}
-                    <option value="{{ r }}">{{ r }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
-                <button type="button" class="btn btn-secondary" onclick="toggleModal('modalCrearUsuario')">Cancelar</button>
-                <button type="submit" class="btn btn-primary">Guardar Usuario</button>
-            </div>
-        </form>
+        <!-- Botón para abrir modal o redirigir a crear usuario -->
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
+            + Nuevo Usuario
+        </button>
     </div>
-</div>
 
-<!-- Tabla de Usuarios -->
-<div class="card-panel">
-    <div class="table-responsive">
-        <table class="custom-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombres y Apellidos</th>
-                    <th>Correo Electrónico</th>
-                    <th>Rol Asignado</th>
-                    <th>Fecha Registro</th>
-                    <th>Acciones</th> <!-- <-- AQUÍ SE AGREGÓ EL ENCABEZADO -->
-                </tr>
-            </thead>
-            <tbody>
-                {% for u in usuarios %}
-                <tr>
-                    <td><strong>#{{ u.id_usuario }}</strong></td>
-                    <td>{{ u.nombres_apellidos }}</td>
-                    <td>{{ u.correo }}</td>
-                    <td>
-                        <span class="badge badge-{{ u.rol | lower }}">
-                            {{ u.rol }}
-                        </span>
-                    </td>
-                    <td>{{ u.fecha_registro.strftime('%d/%m/%Y %H:%M') if u.fecha_registro else 'N/A' }}</td>
-                    <td>
-                        <!-- AQUÍ SE AGREGARON LOS BOTONES DE ACCIÓN -->
-                        <a href="{{ url_for('editar_usuario', id_usuario=u.id_usuario) }}" class="btn btn-sm btn-primary">Editar</a>
-                        <form action="{{ url_for('eliminar_usuario', id_usuario=u.id_usuario) }}" method="POST" style="display:inline;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
-                        </form>
-                    </td>
-                </tr>
+    <!-- Formulario de Filtros Avanzados -->
+    <form method="GET" action="{{ url_for('usuarios') }}" class="row g-3 mb-4 card p-3 shadow-sm bg-white">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, correo o DNI..." value="{{ busqueda }}">
+        </div>
+        <div class="col-md-3">
+            <select name="rol" class="form-select">
+                <option value="">-- Todos los Roles --</option>
+                {% if current_user_role == 'Superadmin' %}
+                <option value="Superadmin" {% if filtro_rol == 'Superadmin' %}selected{% endif %}>Superadmin</option>
+                <option value="Director" {% if filtro_rol == 'Director' %}selected{% endif %}>Director</option>
+                {% endif %}
+                <option value="Administrador" {% if filtro_rol == 'Administrador' %}selected{% endif %}>Administrador</option>
+                <option value="Recepcionista" {% if filtro_rol == 'Recepcionista' %}selected{% endif %}>Recepcionista</option>
+                <option value="Especialista" {% if filtro_rol == 'Especialista' %}selected{% endif %}>Especialista</option>
+                <option value="Paciente" {% if filtro_rol == 'Paciente' %}selected{% endif %}>Paciente</option>
+            </select>
+        </div>
+        {% if current_user_role == 'Superadmin' and clientes %}
+        <div class="col-md-3">
+            <select name="id_cliente" class="form-select">
+                <option value="">-- Todas las Empresas Cliente --</option>
+                {% for cli in clientes %}
+                <option value="{{ cli.id_cliente }}" {% if filtro_cliente|string == cli.id_cliente|string %}selected{% endif %}>{{ cli.nombre_marca }}</option>
                 {% endfor %}
-            </tbody>
-        </table>
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- Tabla de Usuarios -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombres y Apellidos</th>
+                            <th>DNI</th>
+                            <th>Correo Electrónico</th>
+                            <th>Rol Asignado</th>
+                            <th>Fecha Registro</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for u in usuarios %}
+                        <tr>
+                            <td>#{{ u.id_usuario }}</td>
+                            <td><strong>{{ u.nombres_apellidos }}</strong></td>
+                            <td>{{ u.dni or 'No registrado' }}</td>
+                            <td>{{ u.correo }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ u.rol }}</span>
+                            </td>
+                            <td>{{ u.fecha_registro.strftime('%d/%m/%Y %H:%M') if u.fecha_registro else '-' }}</td>
+                            <td class="text-end">
+                                <a href="{{ url_for('editar_usuario', id_usuario=u.id_usuario) }}" class="btn btn-sm btn-primary">Editar</a>
+                                
+                                <form action="{{ url_for('reset_password', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Restablecer la contraseña a temporal (Temp2026*)?');">
+                                    <button type="submit" class="btn btn-sm btn-warning" title="Generar Clave Temporal">Reset Clave</button>
+                                </form>
+
+                                {% if u.id_usuario != current_user_id %}
+                                <form action="{{ url_for('eliminar_usuario', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario?');">
+                                    <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No se encontraron usuarios registrados con los filtros actualizados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
