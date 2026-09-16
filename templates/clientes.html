@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Gestión de Empresas Cliente - Renovatia{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Gestión de Empresas Cliente</h2>
+            <p class="text-muted small mb-0">Administración de clínicas, consultorios y organizaciones multi-tenant</p>
+        </div>
+        <button type="button" class="btn btn-primary shadow-sm px-4" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+            <i class="fa-solid fa-building-user me-2"></i> Nueva Empresa
+        </button>
+    </div>
+
+    <!-- Tabla de Clientes -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-uppercase fs-7 text-secondary">
+                        <tr>
+                            <th class="py-3 ps-4"># ID</th>
+                            <th class="py-3">Marca / Clínica</th>
+                            <th class="py-3">RUC / Razón Social</th>
+                            <th class="py-3">Contacto</th>
+                            <th class="py-3">Estado</th>
+                            <th class="py-3 text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for c in clientes %}
+                        <tr>
+                            <td class="ps-4 fw-semibold text-muted">#{{ c.id_cliente }}</td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ c.nombre_marca }}</div>
+                                <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ c.direccion or 'Sin dirección' }}</small>
+                            </td>
+                            <td>
+                                <div>{{ c.ruc or 'No especificado' }}</div>
+                                <small class="text-muted">{{ c.razon_social or '-' }}</small>
+                            </td>
+                            <td>
+                                <div><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ c.correo_contacto or 'Sin correo' }}</div>
+                                <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ c.telefono or '-' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">
+                                    {{ c.estado_suscripcion or 'Activo' }}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Editar</button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-building-circle-exclamation fs-2 mb-2 d-block"></i>
+                                No hay empresas cliente registradas en el sistema.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Cliente -->
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-light border-0 px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark">Registrar Nueva Empresa / Clínica</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('clientes.gestionar_clientes') }}">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Nombre de la Marca o Clínica *</label>
+                            <input type="text" class="form-control" name="nombre_marca" placeholder="Ej. Renovatia Consultorios" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">RUC</label>
+                            <input type="text" class="form-control" name="ruc" placeholder="Ej. 20600000001">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Razón Social</label>
+                            <input type="text" class="form-control" name="razon_social" placeholder="Razón Social S.A.C.">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Dirección Fiscal / Sede</label>
+                            <input type="text" class="form-control" name="direccion" placeholder="Av. Principal 123, Arequipa">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Teléfono de Contacto</label>
+                            <input type="text" class="form-control" name="telefono" placeholder="+51 900000000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Correo Electrónico de Contacto</label>
+                            <input type="email" class="form-control" name="correo_contacto" placeholder="contacto@clinica.com">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Empresa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
