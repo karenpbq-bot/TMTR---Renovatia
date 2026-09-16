@@ -206,7 +206,12 @@ class CitaUni(db.Model):
 
     reprogramaciones = db.relationship('ReprogramacionUni', backref='cita', lazy=True, cascade="all, delete-orphan")
 
-    # --- Propiedades puente de compatibilidad con plantillas antiguas ---
+    # --- Propiedad puente para compatibilidad con el template antiguo ---
+    @property
+    def cliente(self):
+        """Permite que cita.cliente apunte al paciente en las plantillas antiguas"""
+        return self.paciente
+
     @property
     def fecha_hora(self):
         return self.fecha_hora_inicio
