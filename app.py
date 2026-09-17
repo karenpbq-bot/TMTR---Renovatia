@@ -150,6 +150,7 @@ def historias():
 @app.route('/historias/nueva', methods=['GET', 'POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
+
 def crear_historia():
     cliente_id = session.get('id_cliente')
 
@@ -195,54 +196,10 @@ def crear_historia():
 
 @app.route('/historias/<int:id_historia>')
 @login_required
+
 def ver_historia(id_historia):
     historia = HistoriaClinica.query.get_or_404(id_historia)
     return render_template('historia_detalle.html', historia=historia)
-
-# --- Módulo de Citas y Agendamiento (uni_citas) ---
-@app.route('/citas', methods=['GET', 'POST'])
-@login_required
-def citas():
-    cliente_id = session.get('id_cliente')
-    
-    if request.method == 'POST':
-        id_paciente = request.form.get('id_paciente')
-        id_especialista = request.form.get('id_especialista')
-        fecha_hora_str = request.form.get('fecha_hora_inicio')
-        motivo = request.form.get('motivo_reserva', '')
-
-        try:
-            fecha_hora_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
-            from datetime import timedelta
-            fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=45)
-
-            nueva_cita = CitaUni(
-                id_cliente=cliente_id,
-                id_paciente=id_paciente,
-                id_especialista=id_especialista,
-                fecha_hora_inicio=fecha_hora_inicio,
-                fecha_hora_fin=fecha_hora_fin,
-                estado_cita='Programada',
-                motivo_reserva=motivo
-            )
-            db.session.add(nueva_cita)
-            db.session.commit()
-            flash('Cita programada con éxito.', 'success')
-        except Exception as e:
-            flash(f'Error al agendar cita: {str(e)}', 'danger')
-
-        return redirect(url_for('citas'))
-
-    rol = session.get('user_role')
-    if rol == 'Superadmin':
-        lista_citas = CitaUni.query.order_by(CitaUni.fecha_hora_inicio.desc()).all()
-    else:
-        lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.desc()).all()
-
-    pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
-    especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
-
-    return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
 # --- Módulo de Sesiones de Evolución ---
 @app.route('/sesiones')
