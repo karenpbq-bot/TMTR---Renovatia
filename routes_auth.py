@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, UsuarioUni, PacienteUni, EspecialistaUni
+from models import db, UsuarioUni, PacienteUni, EspecialistaUni, ClienteUni
 from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
@@ -43,26 +43,50 @@ def role_required(*roles):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Gestiona el inicio de sesión unificado para el ecosistema"""
+    
+    # -----------------------------------------------------------------------
+    # GESTIÓN DEL MÉTODO GET: Cargar la pantalla y buscar el logo del cliente
+    # -----------------------------------------------------------------------
+    if request.method == 'GET':
+        codigo_cliente = request.args.get('c')
+        logo_cliente = None
+
+        if codigo_cliente:
+            # Consultar la base de datos usando el modelo de SQLAlchemy
+            cliente = ClienteUni.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
+            
+            if cliente and cliente.nombre_marca:
+                # Formatear el nombre (ej. "Renovatia" -> "renovatia")
+                nombre_archivo = cliente.nombre_marca.lower().replace(" ", "")
+                # Generar la ruta hacia la carpeta static/logos/
+                logo_cliente = url_for('static', filename=f'logos/{nombre_archivo}.png')
+
+        # Renderizar la plantilla enviando la variable del logo
+        return render_template('login.html', logo_cliente=logo_cliente)
+
+    # -----------------------------------------------------------------------
+    # GESTIÓN DEL MÉTODO POST: Validar credenciales (Tu código original)
+    # -----------------------------------------------------------------------
     if request.method == 'POST':
         correo = request.form.get('correo', '').strip().lower()
         password = request.form.get('password', '')
 
         if not correo or not password:
             flash('Por favor ingrese su correo y contraseña.', 'warning')
-            return render_template('login.html')
+            return redirect(url_for('auth.login', c=request.args.get('c'))) # Mantiene el código en la URL tras un error
 
         # 1. Buscar en Usuarios Universales (Superadmin, Administrador, Director, Recepcionista)
         usuario = UsuarioUni.query.filter_by(correo=correo).first()
         if usuario and usuario.check_password(password):
             if not usuario.estado:
                 flash('Su cuenta se encuentra suspendida. Contacte al administrador.', 'danger')
-                return render_template('login.html')
+                return redirect(url_for('auth.login', c=request.args.get('c')))
             
             # Registrar datos clave en la sesión
             session['user_id'] = usuario.id_usuario
             session['user_name'] = usuario.nombres_apellidos
             session['user_role'] = usuario.rol
-            session['id_cliente'] = usuario.id_cliente # Llave multi-tenant (código de 5 dígitos de la organización)
+            session['id_cliente'] = usuario.id_cliente # Llave multi-tenant
             
             flash(f'Bienvenido al sistema, {usuario.nombres_apellidos}', 'success')
             return redirect(url_for('dashboard'))
@@ -72,7 +96,7 @@ def login():
         if especialista and especialista.check_password(password):
             if not especialista.estado:
                 flash('Su cuenta de especialista se encuentra inactiva.', 'danger')
-                return render_template('login.html')
+                return redirect(url_for('auth.login', c=request.args.get('c')))
             
             session['user_id'] = especialista.id_especialista
             session['user_name'] = f"{especialista.nombre} {especialista.apellido}"
@@ -82,7 +106,7 @@ def login():
             flash(f'Bienvenido especialista, {especialista.nombre}', 'success')
             return redirect(url_for('dashboard'))
 
-        # 3. Buscar en Pacientes (Rol Cliente Final - Acceso por código de 7 dígitos)
+        # 3. Buscar en Pacientes (Rol Cliente Final)
         paciente = PacienteUni.query.filter_by(email=correo).first()
         if paciente and paciente.check_password(password):
             session['user_id'] = paciente.id_paciente
@@ -92,11 +116,10 @@ def login():
             session['codigo_7d'] = paciente.codigo_invitacion_7d
             
             flash(f'Bienvenido a su portal, {paciente.nombre}', 'success')
-            return redirect(url_for('portal_paciente')) # Ruta exclusiva para pacientes
+            return redirect(url_for('portal_paciente'))
 
         flash('Credenciales incorrectas. Verifique su correo y contraseña.', 'danger')
-
-    return render_template('login.html')
+        return redirect(url_for('auth.login', c=request.args.get('c')))
 
 
 @auth_bp.route('/logout')
