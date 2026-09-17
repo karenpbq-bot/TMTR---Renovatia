@@ -34,7 +34,7 @@
             <select name="id_cliente" class="form-select">
                 <option value="">-- Todas las Empresas Cliente --</option>
                 {% for cli in clientes %}
-                <option value="{{ cli.id_cliente }}" {% if filtro_cliente|string == cli.id_cliente|string %}selected{% endif %}>{{ cli.nombre_marca }}</option>
+                <option value="{{ cli.id_cliente }}" {% if filtro_cliente|string == cli.id_cliente|string %}selected{% endif %}>{{ cli.nombre_marca }} (Código: {{ cli.codigo_invitacion_5d }})</option>
                 {% endfor %}
             </select>
         </div>
@@ -93,6 +93,69 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Nuevo Usuario (Con validación de Código de Invitación) -->
+<div class="modal fade" id="nuevoUsuarioModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-light border-0 px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark">Registrar Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('usuarios.nuevo_usuario') }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Nombres y Apellidos *</label>
+                        <input type="text" class="form-control" name="nombres_apellidos" placeholder="Ej. Juan Pérez" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">DNI</label>
+                        <input type="text" class="form-control" name="dni" placeholder="Ej. 12345678">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Correo Electrónico *</label>
+                        <input type="email" class="form-control" name="correo" placeholder="correo@clinica.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Rol Asignado *</label>
+                        <select class="form-select" name="rol" required>
+                            <option value="">-- Seleccionar Rol --</option>
+                            {% if current_user_role == 'Superadmin' %}
+                            <option value="Director">Director</option>
+                            {% endif %}
+                            <option value="Administrador">Administrador</option>
+                            <option value="Recepcionista">Recepcionista</option>
+                            <option value="Especialista">Especialista</option>
+                            <option value="Paciente">Paciente</option>
+                        </select>
+                    </div>
+                    
+                    {% if current_user_role == 'Superadmin' and clientes %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Empresa Cliente Asignada</label>
+                        <select class="form-select" name="id_cliente">
+                            <option value="">-- Seleccionar Empresa --</option>
+                            {% for cli in clientes %}
+                            <option value="{{ cli.id_cliente }}">{{ cli.nombre_marca }} (Código: {{ cli.codigo_invitacion_5d }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Código de Invitación (5 Dígitos) *</label>
+                        <input type="text" class="form-control text-uppercase font-monospace" name="codigo_invitacion" maxlength="5" placeholder="Ej. A1B2C" required>
+                        <small class="text-muted d-block mt-1">Ingrese el código de 5 dígitos otorgado a la clínica/empresa.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Crear Usuario</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
