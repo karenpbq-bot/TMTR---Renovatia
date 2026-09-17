@@ -19,7 +19,7 @@
     </div>
     <div class="metric-card">
         <span class="metric-label">Clientes / Pacientes</span>
-        <span class="metric-value">{{ total_clientes }}</span>
+        <span class="metric-value">{{ total_pacientes }}</span>
     </div>
     <div class="metric-card">
         <span class="metric-label">Especialistas</span>
@@ -49,7 +49,7 @@
 <div class="card-panel">
     <div class="card-header">
         <h2 class="card-title">Próximas Citas Agendadas</h2>
-        <a href="{{ url_for('citas') }}" class="btn btn-secondary btn-sm">Ver Todas las Citas</a>
+        <a href="{{ url_for('agenda.gestionar_citas') }}" class="btn btn-secondary btn-sm">Ver Todas las Citas</a>
     </div>
 
     {% if citas %}
