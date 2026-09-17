@@ -9,7 +9,7 @@
         <p class="page-subtitle">Ficha de identificación, antecedentes, diagnósticos y planes de intervención</p>
     </div>
     {% if current_user_role in ['Administrador', 'Especialista'] %}
-    <a href="{{ url_for('crear_historia') }}" class="btn btn-primary">
+    <a href="{{ url_for('clinica.crear_historia') }}" class="btn btn-primary">
         <i class="fa-solid fa-folder-plus"></i>
         <span>Formato Oficial de Admisión</span>
     </a>
@@ -23,7 +23,7 @@
             <thead>
                 <tr>
                     <th># Historia</th>
-                    <th>Paciente / Cliente</th>
+                    <th>Paciente</th>
                     <th>Edad</th>
                     <th>Teléfono</th>
                     <th>Diagnóstico Principal</th>
@@ -35,13 +35,13 @@
                 {% for h in historias %}
                 <tr>
                     <td><strong>HC-{{ "%04d"|format(h.id_historia) }}</strong></td>
-                    <td>{{ h.cliente.nombres_apellidos }}</td>
+                    <td>{{ h.paciente_rel.nombre }} {{ h.paciente_rel.apellido }}</td>
                     <td>{{ h.edad or '-' }} años</td>
                     <td>{{ h.telefono or '-' }}</td>
                     <td>{{ h.codigo_cie11_dsm5 or 'Pendiente' }}</td>
                     <td>{{ h.psicologo_responsable or 'Sin asignar' }}</td>
                     <td>
-                        <a href="{{ url_for('ver_historia', id_historia=h.id_historia) }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ url_for('clinica.ver_historia', id_historia=h.id_historia) }}" class="btn btn-secondary btn-sm">
                             <i class="fa-solid fa-eye"></i> Ver Ficha Completa
                         </a>
                     </td>
