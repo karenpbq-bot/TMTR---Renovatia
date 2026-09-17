@@ -14,9 +14,11 @@ app.config.from_object(Config)
 db.init_app(app)
 
 # --- REGISTRO DE BLUEPRINTS (MÓDULOS MODULARES) ---
+from routes_auth import auth_bp
 from routes_clientes import clientes_bp
 from routes_usuarios import usuarios_bp
 
+app.register_blueprint(auth_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(usuarios_bp)
 
@@ -43,13 +45,13 @@ with app.app_context():
         db.session.commit()
         print("¡Cuenta Superadmin verificada y actualizada!")
 
-# --- Decoradores de Seguridad y Autenticación ---
+# --- Decoradores de Seguridad y Autenticación Globales ---
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Por favor inicie sesión para acceder al sistema.', 'warning')
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -59,7 +61,7 @@ def role_required(*roles):
         def decorated_function(*args, **kwargs):
             if 'user_id' not in session:
                 flash('Sesión no iniciada.', 'danger')
-                return redirect(url_for('login'))
+                return redirect(url_for('auth.login'))
             if session.get('user_role') not in roles:
                 flash('No cuenta con los permisos necesarios para acceder a esta función.', 'danger')
                 return redirect(url_for('dashboard'))
@@ -92,43 +94,6 @@ def inject_globals():
         'current_cliente_nombre': cliente_nombre
     }
 
-# --- 1. Sistema de Autenticación y Redirección Multi-Tenant ---
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        correo = request.form.get('correo', '').strip()
-        password = request.form.get('password', '')
-
-        usuario = UsuarioUni.query.filter_by(correo=correo).first()
-        if usuario and usuario.check_password(password):
-            session['user_id'] = usuario.id_usuario
-            session['user_name'] = usuario.nombres_apellidos
-            session['user_role'] = usuario.rol
-            session['user_email'] = usuario.correo
-            session['id_cliente'] = usuario.id_cliente  # Clave maestra multi-tenant
-            
-            flash(f'¡Bienvenido(a), {usuario.nombres_apellidos} ({usuario.rol})!', 'success')
-
-            # Redirección personalizada según rol
-            if usuario.rol in ['Superadmin', 'Director', 'Administrador']:
-                return redirect(url_for('dashboard'))
-            elif usuario.rol == 'Recepcionista':
-                return redirect(url_for('citas'))
-            elif usuario.rol == 'Especialista':
-                return redirect(url_for('historias'))
-            else:
-                return redirect(url_for('dashboard'))
-        else:
-            flash('Credenciales inválidas. Por favor verifique su correo y contraseña.', 'danger')
-    
-    return render_template('login.html')
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    flash('Ha cerrado sesión correctamente.', 'info')
-    return redirect(url_for('login'))
-
 # --- Dashboard Principal (Aislado por id_cliente) ---
 @app.route('/')
 @login_required
@@ -149,7 +114,6 @@ def dashboard():
         total_especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).count()
         citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.asc()).all()
         
-        # Conteo de historias clínicas ligadas a los pacientes del cliente actual
         total_historias = HistoriaClinica.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).count()
 
     citas_programadas = sum(1 for c in citas if c.estado_cita == 'Programada')
@@ -177,7 +141,6 @@ def historias():
     if rol == 'Superadmin':
         lista_historias = HistoriaClinica.query.all()
     else:
-        # Filtrar historias clínicas cuyos pacientes pertenezcan al cliente actual
         lista_historias = HistoriaClinica.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).all()
 
     return render_template('historias.html', historias=lista_historias)
@@ -225,7 +188,6 @@ def crear_historia():
         flash('Ficha e Historia Clínica creada exitosamente.', 'success')
         return redirect(url_for('ver_historia', id_historia=nueva_historia.id_historia))
 
-    # Pacientes del consultorio actual que aún no tienen historia clínica
     pacientes_sin_historia = PacienteUni.query.filter_by(id_cliente=cliente_id).outerjoin(HistoriaClinica).filter(HistoriaClinica.id_historia == None).all()
     return render_template('historia_nueva.html', pacientes_sin_historia=pacientes_sin_historia)
 
@@ -300,7 +262,7 @@ def sesiones():
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
 def atender_cita(id_cita):
     cita = CitaUni.query.get_or_404(id_cita)
-    evolucion = request.form.get('evolucion_clinica')
+    proven_evolucion = request.form.get('evolucion_clinica')
     observaciones = request.form.get('observaciones_conductuales')
 
     historia = HistoriaClinica.query.filter_by(id_paciente=cita.id_paciente).first()
@@ -311,7 +273,7 @@ def atender_cita(id_cita):
     nueva_sesion = SesionEvolucion(
         id_historia=historia.id_historia,
         fecha_sesion=get_peru_time(),
-        evolucion_clinica=evolucion,
+        evolucion_clinica=proven_evolucion,
         observaciones_conductuales=observaciones
     )
     db.session.add(nueva_sesion)
@@ -321,6 +283,16 @@ def atender_cita(id_cita):
 
     flash(f'Cita #{cita.id_cita} completada y nota de evolución registrada exitosamente.', 'success')
     return redirect(url_for('ver_historia', id_historia=historia.id_historia))
+
+# --- Ruta exclusiva para el Portal del Paciente ---
+@app.route('/portal-paciente')
+@login_required
+@role_required('Paciente')
+def portal_paciente():
+    paciente_id = session.get('user_id')
+    paciente = PacienteUni.query.get_or_404(paciente_id)
+    citas_paciente = CitaUni.query.filter_by(id_paciente=paciente_id).order_by(CitaUni.fecha_hora_inicio.desc()).all()
+    return render_template('portal_paciente.html', paciente=paciente, citas=citas_paciente)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
