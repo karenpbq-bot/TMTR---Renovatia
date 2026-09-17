@@ -28,6 +28,17 @@
             </button>
         </li>
         {% endif %}
+
+        <!-- ========================================== -->
+        <!-- 📍 AQUÍ DEBES PEGAR LA NUEVA PESTAÑA SUPERADMIN -->
+        <!-- ========================================== -->
+        {% if session.get('user_role') == 'Superadmin' %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold" id="superadmin-tab" data-bs-toggle="tab" data-bs-target="#superadmin-panel" type="button" role="tab" style="color: #7c3aed;">
+                <i class="fa-solid fa-shield-halved me-1"></i> Panel Superadmin: Credenciales
+            </button>
+        </li>
+        {% endif %}
     </ul>
 
     <div class="tab-content" id="usuariosTabContent">
@@ -88,6 +99,88 @@
                 </div>
             </div>
         </div>
+
+        <!-- PESTAÑA 2: Generador de Códigos de 7 Dígitos (Exclusivo Administrador) -->
+        {% if session.get('user_role') == 'Administrador' %}
+        <div class="tab-pane fade" id="codigos" role="tabpanel">
+            <!-- (Todo tu código actual de códigos 7D se mantiene intacto aquí) -->
+        </div>
+        {% endif %}
+
+        <!-- ========================================================== -->
+        <!-- 📍 AQUÍ DEBES PEGAR EL CONTENIDO DE LA PESTAÑA SUPERADMIN   -->
+        <!-- ========================================================== -->
+        {% if session.get('user_role') == 'Superadmin' %}
+        <div class="tab-pane fade" id="superadmin-panel" role="tabpanel">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" style="border-left: 5px solid #7c3aed !important;">
+                <h5 class="fw-bold text-dark mb-2"><i class="fa-solid fa-key me-2" style="color: #7c3aed;"></i>Generador y Extractor de Contraseñas Temporales</h5>
+                <p class="text-muted small mb-4">Busque cualquier usuario por nombre, DNI o correo para generarle una nueva clave temporal y extraerla para enviarla por WhatsApp o correo.</p>
+                
+                <!-- Buscador por palabras clave -->
+                <form method="GET" action="{{ url_for('usuarios.gestionar_usuarios') }}" class="row g-3 mb-4">
+                    <div class="col-md-9">
+                        <input type="text" name="q" class="form-control rounded-pill px-3" placeholder="Buscar por nombre, DNI o correo..." value="{{ request.args.get('q', '') }}">
+                    </div>
+                    <div class="col-md-3 d-grid">
+                        <button type="submit" class="btn btn-dark rounded-pill">Buscar Usuario</button>
+                    </div>
+                </form>
+
+                <!-- Alerta para extraer la clave si se acaba de generar -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        {% if category == 'temporal_generada' %}
+                            {% set datos = message.split('::') %}
+                            <div class="alert alert-success rounded-4 p-3 d-flex flex-column flex-md-row justify-content-between align-items-center shadow-sm mb-4">
+                                <div>
+                                    <strong>¡Contraseña generada con éxito!</strong><br>
+                                    <span class="small text-muted">Usuario: <strong>{{ datos[1] }}</strong></span><br>
+                                    <span>Nueva Clave Temporal: <code id="tempPassCode" class="bg-white px-2 py-1 rounded fw-bold text-dark fs-5 border">{{ datos[2] }}</code></span>
+                                </div>
+                                <button type="button" class="btn btn-success btn-sm rounded-pill px-4 mt-2 mt-md-0 shadow-sm" onclick="copiarClaveTemporal()">
+                                    <i class="fa-solid fa-copy me-1"></i> Copiar Clave
+                                </button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+
+                <!-- Tabla rápida de usuarios para el Superadmin con botón de reseteo -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-uppercase fs-7 text-secondary">
+                            <tr>
+                                <th class="py-3 ps-3">Usuario</th>
+                                <th class="py-3">Correo</th>
+                                <th class="py-3">DNI</th>
+                                <th class="py-3">Rol</th>
+                                <th class="py-3 text-end pe-3">Acción Rápida</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in usuarios %}
+                            <tr>
+                                <td class="ps-3 fw-bold text-dark">{{ u.nombres_apellidos }}</td>
+                                <td class="text-muted">{{ u.correo }}</td>
+                                <td>{{ u.dni or 'N/A' }}</td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary px-3 py-1 rounded-pill">{{ u.rol }}</span></td>
+                                <td class="text-end pe-3">
+                                    <form method="POST" action="{{ url_for('usuarios.superadmin_reset_password', id_usuario=u.id_usuario) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" style="border-color: #7c3aed; color: #7c3aed;" onclick="return confirm('¿Desea generar una nueva contraseña temporal para este usuario?');">
+                                            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generar Clave
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
 
         <!-- PESTAÑA 2: Generador de Códigos de 7 Dígitos (Exclusivo Administrador) -->
         {% if session.get('user_role') == 'Administrador' %}
