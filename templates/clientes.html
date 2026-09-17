@@ -22,8 +22,8 @@
                             <th class="py-3 ps-4"># ID</th>
                             <th class="py-3">Código (5D)</th>
                             <th class="py-3">Marca / Clínica</th>
-                            <th class="py-3">RUC / Empresa</th>
-                            <th class="py-3">Contacto</th>
+                            <th class="py-3">Plan y Tarifa</th>
+                            <th class="py-3">Vigencia / Pago</th>
                             <th class="py-3">Estado</th>
                             <th class="py-3 text-end pe-4">Acciones</th>
                         </tr>
@@ -40,12 +40,12 @@
                                 <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ c.direccion or 'Sin dirección' }}</small>
                             </td>
                             <td>
-                                <div>{{ c.ruc or 'No especificado' }}</div>
-                                <small class="text-muted">{{ c.nombre_empresa or '-' }}</small>
+                                <div class="fw-semibold text-primary">{{ c.tipo_plan or 'Sin Plan' }}</div>
+                                <small class="text-muted">S/. {{ "%.2f"|format(c.costo_plan or 0.0) }}</small>
                             </td>
                             <td>
-                                <div><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ c.correo_contacto or 'Sin correo' }}</div>
-                                <small class="text-muted"><i class="fa-solid fa-phone me-1"></i>{{ c.telefono or '-' }}</small>
+                                <div><i class="fa-solid fa-calendar-days me-1 text-muted"></i>{{ c.vigencia_plan.strftime('%d/%m/%Y') if c.vigencia_plan else 'Indefinida' }}</div>
+                                <small class="text-muted"><i class="fa-solid fa-credit-card me-1"></i>{{ c.modo_pago or 'No especificado' }}</small>
                             </td>
                             <td>
                                 <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">
@@ -108,6 +108,24 @@
                             <label class="form-label fw-semibold small">Correo Electrónico de Contacto</label>
                             <input type="email" class="form-control" name="correo_contacto" placeholder="contacto@clinica.com">
                         </div>
+                        <hr class="my-2">
+                        <h6 class="fw-bold text-primary mb-0">Detalles del Plan y Suscripción</h6>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Tipo de Plan</label>
+                            <input type="text" class="form-control" name="tipo_plan" placeholder="Ej. Plan Profesional Mensual">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Costo / Tarifa (S/.)</label>
+                            <input type="number" step="0.01" class="form-control" name="costo_plan" placeholder="Ej. 150.00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Vigencia del Plan</label>
+                            <input type="date" class="form-control" name="vigencia_plan">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Modo de Pago</label>
+                            <input type="text" class="form-control" name="modo_pago" placeholder="Ej. Transferencia BCP / Yape">
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4">
@@ -154,6 +172,24 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Correo Electrónico de Contacto</label>
                             <input type="email" class="form-control" name="correo_contacto" value="{{ c.correo_contacto or '' }}">
+                        </div>
+                        <hr class="my-2">
+                        <h6 class="fw-bold text-primary mb-0">Detalles del Plan y Suscripción</h6>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Tipo de Plan</label>
+                            <input type="text" class="form-control" name="tipo_plan" value="{{ c.tipo_plan or '' }}" placeholder="Ej. Plan Profesional Mensual">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Costo / Tarifa (S/.)</label>
+                            <input type="number" step="0.01" class="form-control" name="costo_plan" value="{{ c.costo_plan or '' }}" placeholder="Ej. 150.00">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Vigencia del Plan</label>
+                            <input type="date" class="form-control" name="vigencia_plan" value="{{ c.vigencia_plan.strftime('%Y-%m-%d') if c.vigencia_plan else '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Modo de Pago</label>
+                            <input type="text" class="form-control" name="modo_pago" value="{{ c.modo_pago or '' }}" placeholder="Ej. Transferencia BCP / Yape">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Estado de Suscripción</label>
