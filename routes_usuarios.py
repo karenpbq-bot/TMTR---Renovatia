@@ -270,3 +270,24 @@ def eliminar_usuario(id_usuario):
         flash('Usuario eliminado correctamente.', 'success')
         
     return redirect(url_for('usuarios.gestionar_usuarios'))
+
+# ===========================================================================
+# 5. PANEL SUPERADMIN: RESTABLECIMIENTO Y EXTRACCIÓN DE CLAVE TEMPORAL
+# ===========================================================================
+
+@usuarios_bp.route('/usuarios/superadmin-reset/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Superadmin')
+def superadmin_reset_password(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    
+    # Generar una clave temporal de 9 caracteres alfanuméricos
+    caracteres = string.ascii_letters + string.digits
+    nueva_clave = ''.join(random.choice(caracteres) for _ in range(9))
+    
+    usuario.set_password(nueva_clave)
+    db.session.commit()
+    
+    # Mensaje codificado para que el Superadmin pueda extraerlo y copiarlo
+    flash(f'ÉXITO_CLAVE::{usuario.correo}::{nueva_clave}', 'temporal_generada')
+    return redirect(url_for('usuarios.gestionar_usuarios'))
