@@ -20,6 +20,7 @@
                     <thead class="bg-light text-uppercase fs-7 text-secondary">
                         <tr>
                             <th class="py-3 ps-4"># ID</th>
+                            <th class="py-3">Código (5D)</th>
                             <th class="py-3">Marca / Clínica</th>
                             <th class="py-3">RUC / Empresa</th>
                             <th class="py-3">Contacto</th>
@@ -31,6 +32,9 @@
                         {% for c in clientes %}
                         <tr>
                             <td class="ps-4 fw-semibold text-muted">#{{ c.id_cliente }}</td>
+                            <td>
+                                <span class="badge bg-dark text-white font-monospace px-2 py-1">{{ c.codigo_invitacion_5d }}</span>
+                            </td>
                             <td>
                                 <div class="fw-bold text-dark">{{ c.nombre_marca }}</div>
                                 <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ c.direccion or 'Sin dirección' }}</small>
@@ -56,7 +60,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="6" class="text-center py-5 text-muted">
+                            <td colspan="7" class="text-center py-5 text-muted">
                                 <i class="fa-solid fa-building-circle-exclamation fs-2 mb-2 d-block"></i>
                                 No hay empresas cliente registradas en el sistema.
                             </td>
