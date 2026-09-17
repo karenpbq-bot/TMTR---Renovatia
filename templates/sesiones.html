@@ -24,14 +24,14 @@
             <h2 class="card-title">Registrar Evolución de Sesión</h2>
             <button onclick="toggleModal('modalNuevaSesion')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
         </div>
-        <form action="{{ url_for('sesiones') }}" method="POST">
+        <form action="{{ url_for('clinica.listar_sesiones') }}" method="POST">
             <div class="form-group">
                 <label for="id_historia" class="form-label">Historia Clínica / Paciente *</label>
                 <select id="id_historia" name="id_historia" class="form-select" required>
                     <option value="">-- Seleccionar Historia Clínica --</option>
                     {% for h in historias %}
                     <option value="{{ h.id_historia }}">
-                        HC-{{ "%04d"|format(h.id_historia) }} | {{ h.cliente.nombres_apellidos }}
+                        HC-{{ "%04d"|format(h.id_historia) }} | {{ h.paciente_rel.nombre }} {{ h.paciente_rel.apellido }}
                     </option>
                     {% endfor %}
                 </select>
@@ -75,13 +75,13 @@
                 <tr>
                     <td><strong>#{{ s.id_sesion }}</strong></td>
                     <td>HC-{{ "%04d"|format(s.id_historia) }}</td>
-                    <td>{{ s.historia_clinica.cliente.nombres_apellidos }}</td>
+                    <td>{{ s.historia_clinica.paciente_rel.nombre }} {{ s.historia_clinica.paciente_rel.apellido }}</td>
                     <td>{{ s.fecha_sesion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td style="max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                         {{ s.evolucion_clinica }}
                     </td>
                     <td>
-                        <a href="{{ url_for('ver_historia', id_historia=s.id_historia) }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ url_for('clinica.ver_historia', id_historia=s.id_historia) }}" class="btn btn-secondary btn-sm">
                             <i class="fa-solid fa-eye"></i> Ver Historia
                         </a>
                     </td>
