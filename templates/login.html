@@ -11,7 +11,7 @@
             <p class="text-muted small">Plataforma de Gestión Psicológica y Multi-Tenant</p>
         </div>
 
-        <!-- Mensajes Flash corregidos con etiquetas Jinja -->
+        <!-- Mensajes Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -23,7 +23,7 @@
             {% endif %}
         {% endwith %}
 
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('auth.login') }}">
             <div class="mb-3">
                 <label for="correo" class="form-label fw-semibold small">Correo Electrónico</label>
                 <input type="email" class="form-control" id="correo" name="correo" placeholder="nombre@correo.com" required autofocus>
