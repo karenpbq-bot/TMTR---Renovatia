@@ -9,7 +9,7 @@ def login_required(f):
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Por favor inicie sesión para acceder al sistema.', 'warning')
-            return redirect(url_for('login'))
+            return redirect(url_for('auth.login')) # <--- Corregido al blueprint auth
         return f(*args, **kwargs)
     return decorated_function
 
