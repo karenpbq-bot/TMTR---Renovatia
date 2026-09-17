@@ -155,45 +155,49 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
-        var calendar = FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-            },
-            buttonText: {
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                day: 'Día'
-            },
-            selectable: true,
-            selectMirror: true,
-            // Al hacer clic en un espacio o día libre del cronograma, abre el modal y autocompleta la fecha/hora
-            select: function(info) {
-                var fechaIso = info.startStr.slice(0, 16); // Formato YYYY-MM-DDTHH:mm
-                var inputFecha = document.getElementById('inputFechaHora');
-                if (inputFecha) {
-                    inputFecha.value = fechaIso;
-                }
-                var modal = new bootstrap.Modal(document.getElementById('modalNuevaCita'));
-                modal.show();
-            },
-            events: [
-                {% for cita in citas %}
-                {
-                    title: '👤 Cita: {{ cita.paciente.nombre }} ({{ cita.estado_cita }})',
-                    start: '{{ cita.fecha_hora_inicio.isoformat() }}',
-                    end: '{{ cita.fecha_hora_fin.isoformat() }}',
-                    backgroundColor: '{% if cita.estado_cita == "Cancelada" %}#dc2626{% else %}#00A89F{% endif %}',
-                    borderColor: 'transparent'
+        if (calendarEl) {
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                {% endfor %}
-            ]
-        });
-        calendar.render();
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    week: 'Semana',
+                    day: 'Día'
+                },
+                selectable: true,
+                selectMirror: true,
+                select: function(info) {
+                    var fechaIso = info.startStr.slice(0, 16); // Formato YYYY-MM-DDTHH:mm
+                    var inputFecha = document.getElementById('inputFechaHora');
+                    if (inputFecha) {
+                        inputFecha.value = fechaIso;
+                    }
+                    var modalEl = document.getElementById('modalNuevaCita');
+                    if (modalEl) {
+                        var modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    }
+                },
+                events: [
+                    {% for cita in citas %}
+                    {
+                        title: '👤 Cita: {{ cita.paciente.nombre }} ({{ cita.estado_cita }})',
+                        start: '{{ cita.fecha_hora_inicio.isoformat() }}',
+                        end: '{{ cita.fecha_hora_fin.isoformat() }}',
+                        backgroundColor: '{% if cita.estado_cita == "Cancelada" %}#dc2626{% else %}#00A89F{% endif %}',
+                        borderColor: 'transparent'
+                    },
+                    {% endfor %}
+                ]
+            });
+            calendar.render();
+        }
     });
 </script>
 {% endblock %}
