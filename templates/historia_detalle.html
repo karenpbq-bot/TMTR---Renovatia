@@ -6,9 +6,9 @@
 <div class="header-bar">
     <div>
         <h1 class="page-title">Historia Clínica HC-{{ "%04d"|format(historia.id_historia) }}</h1>
-        <p class="page-subtitle">Paciente: <strong>{{ historia.cliente.nombres_apellidos }}</strong> ({{ historia.cliente.correo }})</p>
+        <p class="page-subtitle">Paciente: <strong>{{ historia.paciente_rel.nombre }} {{ historia.paciente_rel.apellido }}</strong> ({{ historia.paciente_rel.email }})</p>
     </div>
-    <a href="{{ url_for('historias') }}" class="btn btn-secondary">
+    <a href="{{ url_for('clinica.listar_historias') }}" class="btn btn-secondary">
         <i class="fa-solid fa-arrow-left"></i>
         <span>Volver a la lista</span>
     </a>
@@ -20,7 +20,7 @@
         <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación
     </h2>
     <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-        <div><strong>Fecha Nacimiento:</strong> {{ historia.fecha_nacimiento.strftime('%d/%m/%Y') if historia.fecha_nacimiento else 'N/A' }}</div>
+        <div><strong>Fecha Nacimiento:</strong> {{ historia.fecha_nacimento.strftime('%d/%m/%Y') if historia.fecha_nacimento else 'N/A' }}</div>
         <div><strong>Edad:</strong> {{ historia.edad or 'N/A' }} años</div>
         <div><strong>Procedencia:</strong> {{ historia.procedencia or 'N/A' }}</div>
         <div><strong>Grado Instrucción:</strong> {{ historia.grado_instruccion or 'N/A' }}</div>
@@ -105,7 +105,7 @@
             <i class="fa-solid fa-notes-medical"></i> Sesiones de Evolución Clínica ({{ historia.sesiones_evolucion|length }})
         </h2>
         {% if current_user_role in ['Administrador', 'Especialista'] %}
-        <a href="{{ url_for('sesiones') }}" class="btn btn-primary btn-sm">
+        <a href="{{ url_for('clinica.listar_sesiones') }}" class="btn btn-primary btn-sm">
             <i class="fa-solid fa-plus"></i> Registrar Nueva Sesión
         </a>
         {% endif %}
