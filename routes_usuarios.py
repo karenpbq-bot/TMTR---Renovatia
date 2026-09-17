@@ -64,3 +64,49 @@ def gestionar_usuarios():
         filtro_rol=filtro_rol, 
         filtro_cliente=filtro_cliente
     )
+
+@usuarios_bp.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def editar_usuario(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    
+    if request.method == 'POST':
+        usuario.nombres_apellidos = request.form.get('nombres_apellidos', '').strip()
+        usuario.dni = request.form.get('dni', '').strip() or None
+        usuario.correo = request.form.get('correo', '').strip()
+        usuario.rol = request.form.get('rol', '').strip()
+        
+        if session.get('user_role') == 'Superadmin':
+            id_cli = request.form.get('id_cliente')
+            usuario.id_cliente = int(id_cli) if id_cli else None
+
+        db.session.commit()
+        flash('Usuario actualizado correctamente.', 'success')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
+
+    clientes = ClienteEmpresa.query.all() if session.get('user_role') == 'Superadmin' else []
+    return render_template('usuario_editar.html', usuario=usuario, clientes=clientes)
+
+@usuarios_bp.route('/usuarios/reset/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def reset_password(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    usuario.set_password('Temp2026*')
+    db.session.commit()
+    flash(f'Contraseña de {usuario.nombres_apellidos} restablecida a temporal (Temp2026*).', 'success')
+    return redirect(url_for('usuarios.gestionar_usuarios'))
+
+@usuarios_bp.route('/usuarios/eliminar/<int:id_usuario>', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def eliminar_usuario(id_usuario):
+    usuario = UsuarioUni.query.get_or_404(id_usuario)
+    if usuario.id_usuario == session.get('user_id'):
+        flash('No puede eliminar su propia cuenta activa.', 'danger')
+    else:
+        db.session.delete(usuario)
+        db.session.commit()
+        flash('Usuario eliminado correctamente.', 'success')
+    return redirect(url_for('usuarios.gestionar_usuarios'))
