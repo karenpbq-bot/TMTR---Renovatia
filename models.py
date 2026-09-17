@@ -76,6 +76,9 @@ class UsuarioUni(db.Model):
     nombres_apellidos = db.Column(db.String(150), nullable=False)
     dni = db.Column(db.String(20), nullable=True)
 
+    # NUEVO: Campo para almacenar el código de 7 dígitos con el que se dio de alta
+    codigo_7d = db.Column(db.String(7), nullable=True)
+    
     # Credenciales y Seguridad
     correo = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
