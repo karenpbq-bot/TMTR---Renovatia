@@ -6,6 +6,8 @@
     <title>Iniciar Sesión - Bienestar App</title>
     <!-- Bootstrap 5 CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome para el ícono de respaldo -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             background-color: #f3f4f6;
@@ -45,11 +47,6 @@
             opacity: 0.92;
             color: #ffffff;
         }
-        .brand-title {
-            color: #16a34a;
-            letter-spacing: -0.025em;
-        }
-        /* Clase exclusiva para Bienestar App */
         .app-title-cursive {
             font-family: 'Segoe Script', cursive;
             color: #4a235a;
@@ -68,15 +65,19 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-5 col-lg-4">
-                <div class="card card-login p-4 p-md-5">
+                <div class="card card-login p-4 p-md-5 position-relative">
                     
-                    <!-- Encabezado con Logo Dinámico y Tipografía Segoe Script -->
+                    <!-- Encabezado con Logo Dinámico del Cliente -->
                     <div class="text-center mb-4">
-                        <div class="mb-3">
-                            <!-- Se actualizó la ruta a logos/tamtara.png y se agregó el id dynamic-logo -->
-                            <img src="{{ url_for('static', filename='logos/tamtara.png') }}" id="dynamic-logo" alt="Logo Tamtara" style="max-height: 65px; width: auto;" onerror="this.style.display='none'">
+                        <div class="mb-3" style="min-height: 70px; display: flex; align-items: center; justify-content: center;">
+                            {% if logo_cliente %}
+                                <!-- Muestra el logo desde el enlace público guardado en Supabase -->
+                                <img src="{{ logo_cliente }}" alt="Logo Cliente" style="max-height: 70px; width: auto; object-fit: contain;">
+                            {% else %}
+                                <!-- Respaldo visual si entran sin código o el cliente no tiene logo -->
+                                <i class="fa-solid fa-building-user fs-1 text-primary opacity-50"></i>
+                            {% endif %}
                         </div>
-                        <!-- Se aplicó la clase app-title-cursive para la fuente solicitada -->
                         <h2 class="app-title-cursive mb-1">Bienestar App</h2>
                         <p class="text-muted small m-0">Ingrese sus credenciales para acceder</p>
                     </div>
@@ -117,6 +118,12 @@
                         </div>
                     </form>
 
+                    <!-- Firma de Tamtara en la base -->
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <span class="d-block text-muted" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Powered by</span>
+                        <img src="{{ url_for('static', filename='logos/tamtara.png') }}" alt="Tamtara" style="max-height: 22px; width: auto; opacity: 0.85;">
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -124,23 +131,5 @@
 
     <!-- Bootstrap 5 JS Bundle CDN -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Script para Marca Blanca Dinámica -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Captura el parámetro 'cliente' de la URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const clienteId = urlParams.get('cliente');
-            
-            // Ubica la imagen por su ID
-            const logoImg = document.getElementById('dynamic-logo');
-
-            // Reemplaza la ruta si existe el parámetro (ej. /static/logos/renovatia.png)
-            if (clienteId && logoImg) {
-                logoImg.src = `/static/logos/${clienteId}.png`;
-                logoImg.alt = `Logo de ${clienteId}`;
-            }
-        });
-    </script>
 </body>
 </html>
