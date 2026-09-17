@@ -184,7 +184,7 @@ def generar_codigo_7d():
         caracteres = string.ascii_uppercase + string.digits
         codigo_aleatorio = ''.join(random.choice(caracteres) for _ in range(7))
         existe = Codigo7D.query.filter_by(codigo=codigo_aleatorio).first()
-        if not elle := existe:
+        if not existe:
             break
 
     nuevo_codigo = Codigo7D(
