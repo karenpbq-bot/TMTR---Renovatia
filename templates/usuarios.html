@@ -6,14 +6,13 @@
             <h2>Gestión de Usuarios</h2>
             <p class="text-muted">Administración de accesos y roles del sistema</p>
         </div>
-        <!-- Botón para abrir modal o redirigir a crear usuario -->
         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoUsuarioModal">
             + Nuevo Usuario
         </button>
     </div>
 
     <!-- Formulario de Filtros Avanzados -->
-    <form method="GET" action="{{ url_for('usuarios') }}" class="row g-3 mb-4 card p-3 shadow-sm bg-white">
+    <form method="GET" action="{{ url_for('usuarios.gestionar_usuarios') }}" class="row g-3 mb-4 card p-3 shadow-sm bg-white">
         <div class="col-md-4">
             <input type="text" name="q" class="form-control" placeholder="Buscar por nombre, correo o DNI..." value="{{ busqueda }}">
         </div>
@@ -73,14 +72,14 @@
                             </td>
                             <td>{{ u.fecha_registro.strftime('%d/%m/%Y %H:%M') if u.fecha_registro else '-' }}</td>
                             <td class="text-end">
-                                <a href="{{ url_for('editar_usuario', id_usuario=u.id_usuario) }}" class="btn btn-sm btn-primary">Editar</a>
+                                <a href="{{ url_for('usuarios.editar_usuario', id_usuario=u.id_usuario) }}" class="btn btn-sm btn-primary">Editar</a>
                                 
-                                <form action="{{ url_for('reset_password', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Restablecer la contraseña a temporal (Temp2026*)?');">
+                                <form action="{{ url_for('usuarios.reset_password', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Restablecer la contraseña a temporal (Temp2026*)?');">
                                     <button type="submit" class="btn btn-sm btn-warning" title="Generar Clave Temporal">Reset Clave</button>
                                 </form>
 
                                 {% if u.id_usuario != current_user_id %}
-                                <form action="{{ url_for('eliminar_usuario', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario?');">
+                                <form action="{{ url_for('usuarios.eliminar_usuario', id_usuario=u.id_usuario) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Está seguro de eliminar este usuario?');">
                                     <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
                                 </form>
                                 {% endif %}
