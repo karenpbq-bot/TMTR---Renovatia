@@ -24,7 +24,7 @@
             <h2 class="card-title">Programar Cita Médica</h2>
             <button onclick="toggleModal('modalAgendarCita')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
         </div>
-        <form action="{{ url_for('agenda.agendar_cita') }}" method="POST">
+        <form action="{{ url_for('agenda.gestionar_citas') }}" method="POST">
             {% if current_user_role == 'Cliente' %}
                 <input type="hidden" name="id_cliente" value="{{ current_user_id }}">
             {% else %}
