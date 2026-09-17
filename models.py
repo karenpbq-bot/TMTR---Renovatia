@@ -29,14 +29,13 @@ class ClienteEmpresa(db.Model):
     tipo_especialidad = db.Column(db.String(50), nullable=False, default='Psicología')
     estado = db.Column(db.Boolean, default=True)
 
-    # Información Comercial y de Marca (Sincronizado con formularios y rutas)
+    # Información Comercial y de Marca
     nombre_empresa = db.Column(db.String(150), nullable=True)
     nombre_marca = db.Column(db.String(100), nullable=False)
     ruc = db.Column(db.String(20), unique=True, nullable=True)
-    razon_social = db.Column(db.String(150), nullable=True)      # <-- Incorporado formalmente
-    direccion = db.Column(db.String(255), nullable=True)          # <-- Incorporado para formularios
-    telefono = db.Column(db.String(50), nullable=True)            # <-- Incorporado para formularios
-    correo_contacto = db.Column(db.String(120), nullable=True)    # <-- Incorporado para formularios
+    direccion = db.Column(db.String(255), nullable=True)
+    telefono = db.Column(db.String(50), nullable=True)
+    correo_contacto = db.Column(db.String(120), nullable=True)
     logo_url = db.Column(db.String(255), nullable=True) # Supabase Storage
 
     # Datos de Contacto y Representante
@@ -49,7 +48,7 @@ class ClienteEmpresa(db.Model):
     vigencia_plan = db.Column(db.Date, nullable=True)
     costo_plan = db.Column(db.Numeric(10, 2), nullable=True)
     modo_pago = db.Column(db.String(50), nullable=True)
-    estado_suscripcion = db.Column(db.String(20), default='Activo') # <-- Incorporado para gestión de estado
+    estado_suscripcion = db.Column(db.String(20), default='Activo')
     fecha_creacion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
 
     # Relaciones Multi-Tenant
@@ -68,9 +67,9 @@ class UsuarioUni(db.Model):
     __tablename__ = 'uni_usuarios'
 
     id_usuario = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=True) # Null solo para Superadmin global
+    id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=True)
     
-    rol = db.Column(db.String(50), nullable=False) # 'Superadmin', 'Director', 'Administrador', 'Recepcionista'
+    rol = db.Column(db.String(50), nullable=False)
     estado = db.Column(db.Boolean, default=True)
 
     # Datos Personales
@@ -107,7 +106,7 @@ class EspecialistaUni(db.Model):
     # Datos Personales y Profesionales
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
-    matricula = db.Column(db.String(50), nullable=True) # Colegiatura profesional
+    matricula = db.Column(db.String(50), nullable=True)
     especialidades = db.Column(db.JSON, nullable=True)
 
     # Contacto y Acceso
@@ -184,7 +183,7 @@ class DisponibilidadUni(db.Model):
     id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
     id_especialista = db.Column(db.Integer, db.ForeignKey('uni_especialistas.id_especialista'), nullable=False)
     
-    dia_semana = db.Column(db.String(20), nullable=False) # 'Lunes', 'Martes', etc.
+    dia_semana = db.Column(db.String(20), nullable=False)
     hora_inicio = db.Column(db.Time, nullable=False)
     hora_fin = db.Column(db.Time, nullable=False)
     intervalo_minutos = db.Column(db.Integer, default=45)
