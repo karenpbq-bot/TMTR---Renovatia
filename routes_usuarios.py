@@ -40,7 +40,11 @@ def gestionar_usuarios():
         if filtro_cliente:
             query = query.filter_by(id_cliente=filtro_cliente)
     else:
-        query = UsuarioUni.query.filter_by(id_cliente=cliente_id)
+        # Blindaje crítico: Solo ve su id_cliente y se excluye estrictamente al Superadmin
+        query = UsuarioUni.query.filter(
+            UsuarioUni.id_cliente == cliente_id,
+            UsuarioUni.rol != 'Superadmin'
+        )
 
     if filtro_rol:
         query = query.filter_by(rol=filtro_rol)
@@ -56,14 +60,7 @@ def gestionar_usuarios():
     usuarios = query.order_by(UsuarioUni.id_usuario.desc()).all()
     clientes = ClienteEmpresa.query.all() if rol == 'Superadmin' else []
 
-    return render_template(
-        'usuarios.html', 
-        usuarios=usuarios, 
-        clientes=clientes, 
-        busqueda=busqueda, 
-        filtro_rol=filtro_rol, 
-        filtro_cliente=filtro_cliente
-    )
+    return render_template('usuarios.html', usuarios=usuarios, clientes=clientes, current_user_role=rol)
 
 @usuarios_bp.route('/usuarios/nuevo', methods=['POST'])
 @login_required
