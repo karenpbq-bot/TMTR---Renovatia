@@ -302,3 +302,17 @@ class SesionEvolucion(db.Model):
     fecha_sesion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
     evolucion_clinica = db.Column(db.Text, nullable=False)
     observaciones_conductuales = db.Column(db.Text, nullable=True)
+
+class Codigo7D(db.Model):
+    """Códigos de invitación de 7 dígitos generados por el Administrador"""
+    __tablename__ = 'uni_codigos_7d'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    codigo = db.Column(db.String(7), unique=True, nullable=False, index=True)
+    rol_destino = db.Column(db.String(50), nullable=False)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
+    usado = db.Column(db.Boolean, default=False)
+    fecha = db.Column(db.DateTime(timezone=True), default=get_peru_time)
+
+    def __repr__(self):
+        return f"<Codigo7D {self.codigo} ({self.rol_destino})>"
