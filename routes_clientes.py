@@ -66,7 +66,11 @@ def gestionar_clientes():
         return redirect(url_for('clientes.gestionar_clientes'))
 
     clientes = ClienteEmpresa.query.order_by(ClienteEmpresa.id_cliente.desc()).all()
-    return render_template('clientes.html', clientes=clientes)
+    
+    # Definimos la fecha actual para que funcionen las alertas de colores en la vista
+    hoy = datetime.today().date()
+    
+    return render_template('clientes.html', clientes=clientes, hoy=hoy)
 
 @clientes_bp.route('/clientes/editar/<int:id_cliente>', methods=['POST'])
 @login_required
@@ -95,4 +99,29 @@ def editar_cliente(id_cliente):
 
     db.session.commit()
     flash(f'Datos de la empresa "{cliente.nombre_marca}" (incluyendo plan y tarifa) actualizados correctamente.', 'success')
+    return redirect(url_for('clientes.gestionar_clientes'))
+
+@clientes_bp.route('/clientes/acciones-masivas', methods=['POST'])
+@login_required
+@role_required('Superadmin')
+def acciones_masivas():
+    """Actualiza de forma masiva el estado o la vigencia de las empresas seleccionadas"""
+    ids_seleccionados = request.form.getlist('ids_clientes')
+    nuevo_estado = request.form.get('nuevo_estado')
+    nueva_vigencia = request.form.get('nueva_vigencia')
+    
+    if not ids_seleccionados:
+        flash('No ha seleccionado ninguna empresa para actualizar.', 'warning')
+        return redirect(url_for('clientes.gestionar_clientes'))
+        
+    for id_c in ids_seleccionados:
+        cliente = ClienteEmpresa.query.get(id_c)
+        if cliente:
+            if nuevo_estado:
+                cliente.estado_suscripcion = nuevo_estado
+            if nueva_vigencia:
+                cliente.vigencia_plan = datetime.strptime(nueva_vigencia, '%Y-%m-%d').date()
+                
+    db.session.commit()
+    flash('Se han actualizado las cuentas seleccionadas correctamente.', 'success')
     return redirect(url_for('clientes.gestionar_clientes'))
