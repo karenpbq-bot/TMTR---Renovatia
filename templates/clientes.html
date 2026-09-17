@@ -37,7 +37,7 @@
                             </td>
                             <td>
                                 <div>{{ c.ruc or 'No especificado' }}</div>
-                                <small class="text-muted">{{ c.razon_social or '-' }}</small>
+                                <small class="text-muted">{{ c.nombre_empresa or '-' }}</small>
                             </td>
                             <td>
                                 <div><i class="fa-solid fa-envelope me-1 text-muted"></i>{{ c.correo_contacto or 'Sin correo' }}</div>
@@ -49,7 +49,9 @@
                                 </span>
                             </td>
                             <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3">Editar</button>
+                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditarCliente{{ c.id_cliente }}">
+                                    <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+                                </button>
                             </td>
                         </tr>
                         {% else %}
@@ -87,8 +89,8 @@
                             <input type="text" class="form-control" name="ruc" placeholder="Ej. 20600000001">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold small">Razón Social</label>
-                            <input type="text" class="form-control" name="razon_social" placeholder="Razón Social S.A.C.">
+                            <label class="form-label fw-semibold small">Razón Social / Nombre de Empresa</label>
+                            <input type="text" class="form-control" name="nombre_empresa" placeholder="Ej. Centro Psicológico Integral S.A.C.">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold small">Dirección Fiscal / Sede</label>
@@ -112,4 +114,59 @@
         </div>
     </div>
 </div>
+
+<!-- Modales para Editar cada Cliente existente -->
+{% for c in clientes %}
+<div class="modal fade" id="modalEditarCliente{{ c.id_cliente }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-light border-0 px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark">Editar Empresa: {{ c.nombre_marca }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('clientes.editar_cliente', id_cliente=c.id_cliente) }}">
+                <div class="modal-body p-4 text-start">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Nombre de la Marca o Clínica *</label>
+                            <input type="text" class="form-control" name="nombre_marca" value="{{ c.nombre_marca or '' }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">RUC</label>
+                            <input type="text" class="form-control" name="ruc" value="{{ c.ruc or '' }}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Razón Social / Nombre de Empresa</label>
+                            <input type="text" class="form-control" name="nombre_empresa" value="{{ c.nombre_empresa or '' }}">
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Dirección Fiscal / Sede</label>
+                            <input type="text" class="form-control" name="direccion" value="{{ c.direccion or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Teléfono de Contacto</label>
+                            <input type="text" class="form-control" name="telefono" value="{{ c.telefono or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Correo Electrónico de Contacto</label>
+                            <input type="email" class="form-control" name="correo_contacto" value="{{ c.correo_contacto or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Estado de Suscripción</label>
+                            <select class="form-select" name="estado_suscripcion">
+                                <option value="Activo" {% if c.estado_suscripcion == 'Activo' %}selected{% endif %}>Activo</option>
+                                <option value="Suspendido" {% if c.estado_suscripcion == 'Suspendido' %}selected{% endif %}>Suspendido</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
 {% endblock %}
