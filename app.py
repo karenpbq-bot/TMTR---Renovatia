@@ -18,13 +18,15 @@ from routes_auth import auth_bp
 from routes_clientes import clientes_bp
 from routes_usuarios import usuarios_bp
 from routes_agenda import agenda_bp
-from routes_pacientes import pacientes_bp  # <--- Nuevo Blueprint de Pacientes
+from routes_pacientes import pacientes_bp
+from routes_clinica import clinica_bp  # <--- Nuevo Blueprint Clínico
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(clientes_bp)
 app.register_blueprint(usuarios_bp)
 app.register_blueprint(agenda_bp)
-app.register_blueprint(pacientes_bp)    # <--- Registro oficial
+app.register_blueprint(pacientes_bp)
+app.register_blueprint(clinica_bp)    # <--- Registro oficial
 
 # --- CREACIÓN AUTOMÁTICA DEL SUPERADMIN / ADMIN PRINCIPAL ---
 with app.app_context():
