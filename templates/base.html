@@ -6,7 +6,7 @@
     <title>{% block title %}Renovatia - Gestión Psicológica{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Bootstrap CSS (Si tu proyecto usa Bootstrap para los modales y diseño) -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
@@ -39,7 +39,7 @@
                 </li>
                 {% endif %}
 
-                <!-- Módulo de Usuarios y Roles (Actualizado al Blueprint) -->
+                <!-- Módulo de Usuarios y Roles -->
                 {% if current_user_role == 'Superadmin' or current_user_role in ['Director', 'Administrador', 'Recepcionista'] %}
                 <li class="nav-item {% if request.endpoint == 'usuarios.gestionar_usuarios' %}active{% endif %}">
                     <a href="{{ url_for('usuarios.gestionar_usuarios') }}">
@@ -49,25 +49,28 @@
                 </li>
                 {% endif %}
 
-                <li class="nav-item {% if request.endpoint == 'citas' %}active{% endif %}">
-                    <a href="{{ url_for('citas') }}">
+                <!-- Módulo de Agenda (Actualizado al Blueprint agenda) -->
+                <li class="nav-item {% if request.endpoint in ['agenda.gestionar_citas', 'agenda.agendar_cita'] %}active{% endif %}">
+                    <a href="{{ url_for('agenda.gestionar_citas') }}">
                         <i class="fa-solid fa-calendar-check"></i>
                         <span>Agenda de Citas</span>
                     </a>
                 </li>
 
+                <!-- Módulo de Historias Clínicas (Actualizado al Blueprint clinica) -->
                 {% if current_user_role == 'Superadmin' or current_user_role in ['Administrador', 'Especialista', 'Paciente'] %}
-                <li class="nav-item {% if request.endpoint in ['historias', 'ver_historia'] %}active{% endif %}">
-                    <a href="{{ url_for('historias') }}">
+                <li class="nav-item {% if request.endpoint in ['clinica.listar_historias', 'clinica.crear_historia', 'clinica.ver_historia'] %}active{% endif %}">
+                    <a href="{{ url_for('clinica.listar_historias') }}">
                         <i class="fa-solid fa-file-medical"></i>
                         <span>Historias Clínicas</span>
                     </a>
                 </li>
                 {% endif %}
 
+                <!-- Módulo de Sesiones de Evolución (Actualizado al Blueprint clinica) -->
                 {% if current_user_role == 'Superadmin' or current_user_role in ['Director', 'Administrador', 'Especialista'] %}
-                <li class="nav-item {% if request.endpoint == 'sesiones' %}active{% endif %}">
-                    <a href="{{ url_for('sesiones') }}">
+                <li class="nav-item {% if request.endpoint == 'clinica.listar_sesiones' %}active{% endif %}">
+                    <a href="{{ url_for('clinica.listar_sesiones') }}">
                         <i class="fa-solid fa-notes-medical"></i>
                         <span>Sesiones Evolución</span>
                     </a>
@@ -82,7 +85,8 @@
                         {{ current_user_role }}
                     </span>
                 </div>
-                <a href="{{ url_for('logout') }}" class="btn-logout">
+                <!-- Actualizado al Blueprint auth -->
+                <a href="{{ url_for('auth.logout') }}" class="btn-logout">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>Cerrar Sesión</span>
                 </a>
@@ -112,7 +116,7 @@
     {% endif %}
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <!-- Bootstrap JS Bundle (Necesario para que funcionen los modales de Bootstrap) -->
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
