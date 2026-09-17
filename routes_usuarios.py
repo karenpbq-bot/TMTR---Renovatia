@@ -65,11 +65,60 @@ def gestionar_usuarios():
         filtro_cliente=filtro_cliente
     )
 
+@usuarios_bp.route('/usuarios/nuevo', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador')
+def nuevo_usuario():
+    rol_sesion = session.get('user_role')
+    cliente_id_sesion = session.get('id_cliente')
+
+    nombres = request.form.get('nombres_apellidos', '').strip()
+    dni = request.form.get('dni', '').strip() or None
+    correo = request.form.get('correo', '').strip()
+    rol = request.form.get('rol', '').strip()
+    
+    if rol_sesion == 'Superadmin':
+        id_cli = request.form.get('id_cliente')
+        id_cliente = int(id_cli) if id_cli else None
+    else:
+        id_cliente = cliente_id_sesion
+
+    if not nombres or not correo or not rol:
+        flash('Los campos de nombres, correo y rol son obligatorios.', 'warning')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
+
+    # Verificar si el correo ya existe
+    existe = UsuarioUni.query.filter_by(correo=correo).first()
+    if existe:
+        flash('El correo electrónico ya se encuentra registrado en el sistema.', 'danger')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
+
+    nuevo = UsuarioUni(
+        nombres_apellidos=nombres,
+        dni=dni,
+        correo=correo,
+        rol=rol,
+        id_cliente=id_cliente
+    )
+    # Contraseña temporal por defecto
+    nuevo.set_password('Temp2026*')
+
+    db.session.add(nuevo)
+    db.session.commit()
+    flash(f'Usuario "{nombres}" registrado exitosamente con clave temporal (Temp2026*).', 'success')
+    return redirect(url_for('usuarios.gestionar_usuarios'))
+
 @usuarios_bp.route('/usuarios/editar/<int:id_usuario>', methods=['GET', 'POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador')
 def editar_usuario(id_usuario):
     usuario = UsuarioUni.query.get_or_404(id_usuario)
+    rol_sesion = session.get('user_role')
+
+    # Aislamiento multi-tenant: si no es Superadmin, solo puede editar usuarios de su clínica
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No cuenta con autorización para editar este usuario.', 'danger')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
     
     if request.method == 'POST':
         usuario.nombres_apellidos = request.form.get('nombres_apellidos', '').strip()
@@ -77,7 +126,7 @@ def editar_usuario(id_usuario):
         usuario.correo = request.form.get('correo', '').strip()
         usuario.rol = request.form.get('rol', '').strip()
         
-        if session.get('user_role') == 'Superadmin':
+        if rol_sesion == 'Superadmin':
             id_cli = request.form.get('id_cliente')
             usuario.id_cliente = int(id_cli) if id_cli else None
 
@@ -85,7 +134,7 @@ def editar_usuario(id_usuario):
         flash('Usuario actualizado correctamente.', 'success')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    clientes = ClienteEmpresa.query.all() if session.get('user_role') == 'Superadmin' else []
+    clientes = ClienteEmpresa.query.all() if rol_sesion == 'Superadmin' else []
     return render_template('usuario_editar.html', usuario=usuario, clientes=clientes)
 
 @usuarios_bp.route('/usuarios/reset/<int:id_usuario>', methods=['POST'])
@@ -93,6 +142,12 @@ def editar_usuario(id_usuario):
 @role_required('Superadmin', 'Director', 'Administrador')
 def reset_password(id_usuario):
     usuario = UsuarioUni.query.get_or_404(id_usuario)
+    rol_sesion = session.get('user_role')
+
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No cuenta con autorización para realizar esta acción.', 'danger')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
+
     usuario.set_password('Temp2026*')
     db.session.commit()
     flash(f'Contraseña de {usuario.nombres_apellidos} restablecida a temporal (Temp2026*).', 'success')
@@ -103,6 +158,12 @@ def reset_password(id_usuario):
 @role_required('Superadmin', 'Director', 'Administrador')
 def eliminar_usuario(id_usuario):
     usuario = UsuarioUni.query.get_or_404(id_usuario)
+    rol_sesion = session.get('user_role')
+
+    if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
+        flash('No cuenta con autorización para eliminar este usuario.', 'danger')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
+
     if usuario.id_usuario == session.get('user_id'):
         flash('No puede eliminar su propia cuenta activa.', 'danger')
     else:
