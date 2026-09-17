@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, UsuarioUni, PacienteUni, EspecialistaUni, ClienteUni
+from models import db, UsuarioUni, PacienteUni, EspecialistaUni, ClienteEmpresa
 from functools import wraps
 
 auth_bp = Blueprint('auth', __name__)
@@ -53,7 +53,8 @@ def login():
 
         if codigo_cliente:
             # Consultar la base de datos usando el modelo de SQLAlchemy
-            cliente = ClienteUni.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
+            # Consultar la base de datos usando el modelo correcto
+            cliente = ClienteEmpresa.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
             
             if cliente and cliente.nombre_marca:
                 # Formatear el nombre (ej. "Renovatia" -> "renovatia")
