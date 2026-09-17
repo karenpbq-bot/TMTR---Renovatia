@@ -299,3 +299,14 @@ class SesionEvolucion(db.Model):
     fecha_sesion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
     evolucion_clinica = db.Column(db.Text, nullable=False)
     observaciones_conductuales = db.Column(db.Text, nullable=True)
+
+# ===========================================================================
+# 4. nueva clase
+# ===========================================================================
+
+class ClienteUni(db.Model):
+    __tablename__ = 'uni_clientes'
+    
+    id_cliente = db.Column(db.Integer, primary_key=True)
+    codigo_invitacion_5d = db.Column(db.String(5), unique=True)
+    nombre_marca = db.Column(db.String(255))
