@@ -1,44 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container d-flex align-items-center justify-content-center min-vh-100">
-    <div class="card shadow-lg p-4 border-0 rounded-4" style="width: 100%; max-width: 420px;">
-        <div class="text-center mb-4">
-            <!-- Logotipo de la plataforma SaaS -->
-            <div class="bg-dark text-white rounded-3 py-3 px-4 mb-3 d-inline-block shadow-sm">
-                <h2 class="fw-bold tracking-wider mb-0 text-uppercase" style="letter-spacing: 2px;">TAMTARA</h2>
-            </div>
-            <h3 class="fw-bold text-primary">Psicolapp</h3>
-            <p class="text-muted small">Plataforma de Gestión Psicológica y Multi-Tenant</p>
-        </div>
-
-        <!-- Mensajes Flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show small" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('auth.login') }}">
-            <div class="mb-3">
-                <label for="correo" class="form-label fw-semibold small">Correo Electrónico</label>
-                <input type="email" class="form-control" id="correo" name="correo" placeholder="nombre@correo.com" required autofocus>
+    <div class="col-md-5">
+        <div class="card shadow-lg border-0 rounded-4 p-4">
+            <div class="text-center mb-4">
+                <h3 class="fw-bold text-primary">Iniciar Sesión</h3>
+                <p class="text-muted small">Ingrese sus credenciales para acceder al sistema</p>
             </div>
 
-            <div class="mb-3">
-                <label for="password" class="form-label fw-semibold small">Contraseña</label>
-                <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required>
-            </div>
+            <!-- Bloque seguro para mensajes flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">Iniciar Sesión</button>
-        </form>
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="mb-3">
+                    <label for="correo" class="form-label fw-semibold small">Correo Electrónico</label>
+                    <input type="email" class="form-control rounded-pill px-3" id="correo" name="correo" placeholder="nombre@ejemplo.com" required autofocus>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="password" class="form-label fw-semibold small">Contraseña</label>
+                    <input type="password" class="form-control rounded-pill px-3" id="password" name="password" placeholder="••••••••" required>
+                </div>
 
-        <div class="text-center mt-4">
-            <small class="text-muted">© 2026 Psicolapp — Powered by Tamtara</small>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary rounded-pill py-2 fw-semibold shadow-sm">Ingresar al Sistema</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
