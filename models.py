@@ -179,21 +179,24 @@ class PacienteUni(db.Model):
 # ===========================================================================
 
 class DisponibilidadUni(db.Model):
-    """Bloques horarios y días disponibles de los especialistas"""
+    """Bloques horarios, plantilla semanal y excepciones de los especialistas"""
     __tablename__ = 'uni_disponibilidad'
 
     id_disponibilidad = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
     id_especialista = db.Column(db.Integer, db.ForeignKey('uni_especialistas.id_especialista'), nullable=False)
     
-    dia_semana = db.Column(db.String(20), nullable=False)
-    hora_inicio = db.Column(db.Time, nullable=False)
-    hora_fin = db.Column(db.Time, nullable=False)
+    dia_semana = db.Column(db.String(20), nullable=False) # Lunes, Martes, etc.
+    fecha_especifica = db.Column(db.Date, nullable=True) # NUEVO: Para excepciones de días exactos del mes
+    bloqueado_todo_el_dia = db.Column(db.Boolean, default=False) # NUEVO: Bloqueo total de jornada
+    
+    hora_inicio = db.Column(db.Time, nullable=True)
+    hora_fin = db.Column(db.Time, nullable=True)
     intervalo_minutos = db.Column(db.Integer, default=45)
     estado = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
-        return f"<Disponibilidad {self.dia_semana} {self.hora_inicio}-{self.hora_fin}>"
+        return f"<Disponibilidad {self.dia_semana} {self.fecha_especifica or 'Base'}>"
 
 
 class CitaUni(db.Model):
