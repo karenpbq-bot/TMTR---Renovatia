@@ -97,7 +97,7 @@
     </div>
 </div>
 
-<!-- Modal Nuevo Usuario (Con validación de Código de Invitación) -->
+<!-- Modal Nuevo Usuario -->
 <div class="modal fade" id="nuevoUsuarioModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow-lg rounded-4">
@@ -118,6 +118,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Correo Electrónico *</label>
                         <input type="email" class="form-control" name="correo" placeholder="correo@clinica.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Contraseña Inicial *</label>
+                        <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Rol Asignado *</label>
@@ -157,6 +161,8 @@
                 </div>
             </form>
         </div>
+    </div>
+</div>
     </div>
 </div>
 {% endblock %}
