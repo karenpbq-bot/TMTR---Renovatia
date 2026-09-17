@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, CitaUni, PacienteUni, EspecialistaUni, ReprogramacionUni, get_peru_time
+from models import db, CitaUni, PacienteUni, EspecialistaUni, ReprogramacionUni, DisponibilidadUni, get_peru_time
 from datetime import datetime, timedelta
 from routes_auth import login_required, role_required
 
@@ -126,7 +126,7 @@ def reprogramar_cita(id_cita):
         # Actualizar tiempos de la cita
         cita.fecha_hora_inicio = nueva_inicio
         cita.fecha_hora_fin = nueva_fin
-        cita.estado_cita = 'Programada' # Opcional: mantener o reconfirmar
+        cita.estado_cita = 'Programada'
 
         db.session.add(reprogramacion)
         db.session.commit()
@@ -137,3 +137,74 @@ def reprogramar_cita(id_cita):
         flash(f'Error al reprogramar la cita: {str(e)}', 'danger')
 
     return redirect(url_for('agenda.gestionar_citas'))
+
+
+# ===========================================================================
+# GESTIÓN DE DISPONIBILIDAD HORARIA DEL ESPECIALISTA
+# ===========================================================================
+
+@agenda_bp.route('/disponibilidad', methods=['GET', 'POST'])
+@login_required
+def gestionar_disponibilidad():
+    """Permite configurar los bloques de disponibilidad horaria por especialista"""
+    cliente_id = session.get('id_cliente')
+    rol = session.get('user_role')
+    user_id = session.get('user_id')
+
+    if rol == 'Especialista':
+        especialista_id = user_id
+    else:
+        especialista_id = request.args.get('id_especialista', type=int)
+
+    if request.method == 'POST':
+        if not especialista_id:
+            flash('Debe seleccionar un especialista.', 'warning')
+            return redirect(url_for('agenda.gestionar_disponibilidad'))
+
+        dia_semana = request.form.get('dia_semana')
+        hora_inicio = request.form.get('hora_inicio')
+        hora_fin = request.form.get('hora_fin')
+        intervalo = request.form.get('intervalo_minutos', 45)
+
+        try:
+            dispo_existente = DisponibilidadUni.query.filter_by(
+                id_especialista=especialista_id,
+                dia_semana=dia_semana
+            ).first()
+
+            if dispo_existente:
+                dispo_existente.hora_inicio = hora_inicio
+                dispo_existente.hora_fin = hora_fin
+                dispo_existente.intervalo_minutos = int(intervalo)
+                dispo_existente.estado = True
+            else:
+                nueva_dispo = DisponibilidadUni(
+                    id_cliente=cliente_id,
+                    id_especialista=especialista_id,
+                    dia_semana=dia_semana,
+                    hora_inicio=hora_inicio,
+                    hora_fin=hora_fin,
+                    intervalo_minutos=int(intervalo),
+                    estado=True
+                )
+                db.session.add(nueva_dispo)
+
+            db.session.commit()
+            flash('¡Horario de disponibilidad guardado con éxito!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al guardar disponibilidad: {str(e)}', 'danger')
+
+        return redirect(url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_id))
+
+    especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
+    disponibilidades = []
+    if especialista_id:
+        disponibilidades = DisponibilidadUni.query.filter_by(id_especialista=especialista_id).all()
+
+    return render_template(
+        'disponibilidad.html',
+        especialistas=especialistas,
+        disponibilidades=disponibilidades,
+        especialista_activo=especialista_id
+    )
