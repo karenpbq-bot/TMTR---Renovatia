@@ -66,19 +66,18 @@
         <div class="row justify-content-center">
             <div class="col-md-5 col-lg-4">
                 <div class="card card-login p-4 p-md-5 position-relative">
-                    
-                    <!-- Encabezado con Logo Dinámico del Cliente -->
+    
+                    <!-- PARTE SUPERIOR: Exclusiva para el Logo del Cliente -->
                     <div class="text-center mb-4">
                         <div class="mb-3" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
                             {% if logo_cliente %}
-                                <!-- Muestra el logo desde la ruta generada (70% más grande: 120px) -->
+                                <!-- Logo dinámico de la clínica o consultorio (70% más grande) -->
                                 <img src="{{ logo_cliente }}" alt="Logo Cliente" style="max-height: 120px; width: auto; object-fit: contain;">
                             {% else %}
-                                <!-- Respaldo visual si entran sin código o el cliente no tiene logo -->
+                                <!-- Respaldo visual si no hay código -->
                                 <i class="fa-solid fa-building-user text-primary opacity-50" style="font-size: 4rem;"></i>
                             {% endif %}
                         </div>
-                        <h2 class="app-title-cursive mb-1">Bienestar App</h2>
                         <p class="text-muted small m-0">Ingrese sus credenciales para acceder</p>
                     </div>
 
@@ -102,7 +101,7 @@
                             <label for="correo" class="form-label fw-semibold small text-secondary">Correo Electrónico</label>
                             <input type="email" class="form-control rounded-pill" id="correo" name="correo" placeholder="nombre@ejemplo.com" required autofocus>
                         </div>
-                        
+        
                         <div class="mb-3">
                             <label for="password" class="form-label fw-semibold small text-secondary">Contraseña</label>
                             <input type="password" class="form-control rounded-pill" id="password" name="password" placeholder="••••••••" required>
@@ -118,6 +117,11 @@
                         </div>
                     </form>
 
+                    <!-- PARTE INFERIOR: Identidad de la App y Firma de Tamtara -->
+                    <div class="text-center mt-4 pt-3 border-top">
+                        <!-- Nombre de la plataforma con protagonismo debajo del botón -->
+                        <h2 class="app-title-cursive mb-2">Bienestar App</h2>
+        
                     <!-- Firma de Tamtara en la base -->
                     <div class="text-center mt-4 pt-3 border-top">
                         <span class="d-block text-muted" style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">Powered by</span>
