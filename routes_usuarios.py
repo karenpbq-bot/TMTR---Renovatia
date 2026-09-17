@@ -76,6 +76,7 @@ def nuevo_usuario():
     dni = request.form.get('dni', '').strip() or None
     correo = request.form.get('correo', '').strip()
     rol = request.form.get('rol', '').strip()
+    codigo_ingresado = request.form.get('codigo_invitacion', '').strip().upper()
     
     if rol_sesion == 'Superadmin':
         id_cli = request.form.get('id_cliente')
@@ -86,6 +87,18 @@ def nuevo_usuario():
     if not nombres or not correo or not rol:
         flash('Los campos de nombres, correo y rol son obligatorios.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
+
+    # Regla de Negocio: Validar código de invitación (excepto si el rol a crear es Administrador inicial o lo crea el Superadmin global)
+    if rol != 'Administrador' or rol_sesion != 'Superadmin':
+        if not id_cliente:
+            flash('Debe asociar el usuario a una empresa cliente válida.', 'danger')
+            return redirect(url_for('usuarios.gestionar_usuarios'))
+        
+        # Buscar la empresa cliente para verificar su código de 5 dígitos
+        empresa_asociada = ClienteEmpresa.query.get(id_cliente)
+        if not empresa_asociada or empresa_asociada.codigo_invitacion_5d != codigo_ingresado:
+            flash('El código de invitación de 5 dígitos ingresado es incorrecto o inválido para esta empresa.', 'danger')
+            return redirect(url_for('usuarios.gestionar_usuarios'))
 
     # Verificar si el correo ya existe
     existe = UsuarioUni.query.filter_by(correo=correo).first()
@@ -100,7 +113,6 @@ def nuevo_usuario():
         rol=rol,
         id_cliente=id_cliente
     )
-    # Contraseña temporal por defecto
     nuevo.set_password('Temp2026*')
 
     db.session.add(nuevo)
@@ -115,7 +127,6 @@ def editar_usuario(id_usuario):
     usuario = UsuarioUni.query.get_or_404(id_usuario)
     rol_sesion = session.get('user_role')
 
-    # Aislamiento multi-tenant: si no es Superadmin, solo puede editar usuarios de su clínica
     if rol_sesion != 'Superadmin' and usuario.id_cliente != session.get('id_cliente'):
         flash('No cuenta con autorización para editar este usuario.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
