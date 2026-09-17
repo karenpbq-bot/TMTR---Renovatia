@@ -173,26 +173,24 @@
         <aside class="sidebar">
             <div class="brand-container-sidebar">
                 {% if current_user_role == 'Superadmin' %}
-                    <!-- Logo fijo para tu cuenta Superadmin -->
-                    <img src="{{ url_for('static', filename='logos/tamtara.png') }}" alt="Logo Tamtara" style="max-height: 42px; width: auto; object-fit: contain;">
-                
+                    <!-- Logo fijo para tu cuenta Superadmin más grande -->
+                    <img src="{{ url_for('static', filename='logos/tamtara.png') }}" alt="Logo Tamtara" style="max-height: 75px; width: auto; object-fit: contain;">
+    
                 {% elif session.get('codigo_empresa_logo') %}
-                    <!-- Logo dinámico de la empresa cliente según la sesión -->
+                    <!-- Logo dinámico de la empresa cliente con mayor tamaño -->
                     <img src="{{ url_for('static', filename='logos/' ~ session.get('codigo_empresa_logo') ~ '.png') }}" 
                          alt="Logo Empresa" 
-                         style="max-height: 45px; width: auto; object-fit: contain;"
+                         style="max-height: 75px; width: auto; object-fit: contain;"
                          onerror="this.style.display='none'; document.getElementById('fallback-marca').style.display='block';">
-                    
-                    <!-- Respaldo en texto si la imagen no se encuentra -->
+        
                     <div id="fallback-marca" style="display: none;">
-                        <span class="fs-6 fw-bold text-dark">{{ session.get('nombre_marca_cliente', 'Plataforma') }}</span>
+                        <span class="fs-5 fw-bold text-dark">{{ session.get('nombre_marca_cliente', 'Plataforma') }}</span>
                     </div>
-                
+    
                 {% else %}
-                    <!-- Respaldo por defecto -->
                     <div class="d-flex align-items-center">
-                        <i class="fa-solid fa-brain fs-4 me-2 text-primary"></i>
-                        <span class="fs-5 fw-bold text-dark">Renovatia</span>
+                        <i class="fa-solid fa-brain fs-3 me-2 text-primary"></i>
+                        <span class="fs-4 fw-bold text-dark">Renovatia</span>
                     </div>
                 {% endif %}
             </div>
