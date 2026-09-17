@@ -12,63 +12,161 @@
         </button>
     </div>
 
-    <!-- Tabla de Clientes -->
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light text-uppercase fs-7 text-secondary">
-                        <tr>
-                            <th class="py-3 ps-4"># ID</th>
-                            <th class="py-3">Código (5D)</th>
-                            <th class="py-3">Marca / Clínica</th>
-                            <th class="py-3">Plan y Tarifa</th>
-                            <th class="py-3">Vigencia / Pago</th>
-                            <th class="py-3">Estado</th>
-                            <th class="py-3 text-end pe-4">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for c in clientes %}
-                        <tr>
-                            <td class="ps-4 fw-semibold text-muted">#{{ c.id_cliente }}</td>
-                            <td>
-                                <span class="badge bg-dark text-white font-monospace px-2 py-1">{{ c.codigo_invitacion_5d }}</span>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-dark">{{ c.nombre_marca }}</div>
-                                <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i>{{ c.direccion or 'Sin dirección' }}</small>
-                            </td>
-                            <td>
-                                <div class="fw-semibold text-primary">{{ c.tipo_plan or 'Sin Plan' }}</div>
-                                <small class="text-muted">S/. {{ "%.2f"|format(c.costo_plan or 0.0) }}</small>
-                            </td>
-                            <td>
-                                <div><i class="fa-solid fa-calendar-days me-1 text-muted"></i>{{ c.vigencia_plan.strftime('%d/%m/%Y') if c.vigencia_plan else 'Indefinida' }}</div>
-                                <small class="text-muted"><i class="fa-solid fa-credit-card me-1"></i>{{ c.modo_pago or 'No especificado' }}</small>
-                            </td>
-                            <td>
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">
-                                    {{ c.estado_suscripcion or 'Activo' }}
-                                </span>
-                            </td>
-                            <td class="text-end pe-4">
-                                <button class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditarCliente{{ c.id_cliente }}">
-                                    <i class="fa-solid fa-pen-to-square me-1"></i> Editar
-                                </button>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center py-5 text-muted">
-                                <i class="fa-solid fa-building-circle-exclamation fs-2 mb-2 d-block"></i>
-                                No hay empresas cliente registradas en el sistema.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Navegación por Pestañas -->
+    <ul class="nav nav-tabs mb-4" id="clientesTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-semibold" id="listado-tab" data-bs-toggle="tab" data-bs-target="#listado" type="button" role="tab">Listado General</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-semibold text-danger" id="admin-tab" data-bs-toggle="tab" data-bs-target="#admin" type="button" role="tab"><i class="fa-solid fa-bolt me-1"></i> Panel de Administración Masiva</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="clientesTabContent">
+        
+        <!-- PESTAÑA 1: Listado y Buscador Universal -->
+        <div class="tab-pane fade show active" id="listado" role="tabpanel">
+            <div class="row mb-3">
+                <div class="col-md-6 col-lg-4">
+                    <div class="input-group shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" id="buscadorUniversal" class="form-control border-start-0 ps-0" placeholder="Buscar por Nombre, RUC, Código 5D...">
+                    </div>
+                </div>
             </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0" id="tablaClientesGeneral">
+                            <thead class="bg-light text-uppercase fs-7 text-secondary">
+                                <tr>
+                                    <th class="py-3 ps-4">Código (5D)</th>
+                                    <th class="py-3">Marca / RUC</th>
+                                    <th class="py-3">Plan y Tarifa</th>
+                                    <th class="py-3">Vigencia / Alerta</th>
+                                    <th class="py-3">Estado</th>
+                                    <th class="py-3 text-end pe-4">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clientes %}
+                                <tr class="fila-cliente">
+                                    <td class="ps-4">
+                                        <span class="badge bg-dark text-white font-monospace px-2 py-1 search-target">{{ c.codigo_invitacion_5d }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-dark search-target">{{ c.nombre_marca }}</div>
+                                        <small class="text-muted search-target">RUC: {{ c.ruc or 'N/A' }} | {{ c.nombre_empresa or '' }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-primary search-target">{{ c.tipo_plan or 'Sin Plan' }}</div>
+                                        <small class="text-muted">S/. {{ "%.2f"|format(c.costo_plan or 0.0) }}</small>
+                                    </td>
+                                    <td>
+                                        <!-- Sistema de Alertas de Vencimiento -->
+                                        {% if c.vigencia_plan %}
+                                            {% if hoy and c.vigencia_plan < hoy %}
+                                                <div class="text-danger fw-bold"><i class="fa-solid fa-circle-exclamation me-1"></i> {{ c.vigencia_plan.strftime('%d/%m/%Y') }} (Vencido)</div>
+                                            {% elif hoy and (c.vigencia_plan - hoy).days <= 7 %}
+                                                <div class="text-warning fw-bold"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ c.vigencia_plan.strftime('%d/%m/%Y') }} (Próximo)</div>
+                                            {% else %}
+                                                <div class="text-success"><i class="fa-solid fa-calendar-check me-1"></i> {{ c.vigencia_plan.strftime('%d/%m/%Y') }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="text-muted">Indefinida</div>
+                                        {% endif %}
+                                        <small class="text-muted"><i class="fa-solid fa-credit-card me-1"></i>{{ c.modo_pago or 'No especificado' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if c.estado_suscripcion == 'Activo' or not c.estado_suscripcion %}
+                                            <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fw-semibold">Activo</span>
+                                        {% else %}
+                                            <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill fw-semibold">{{ c.estado_suscripcion }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditarCliente{{ c.id_cliente }}">
+                                            <i class="fa-solid fa-pen-to-square me-1"></i> Editar
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-5 text-muted">
+                                        <i class="fa-solid fa-building-circle-exclamation fs-2 mb-2 d-block"></i>
+                                        No hay empresas cliente registradas en el sistema.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PESTAÑA 2: Panel de Administración y Acciones Masivas -->
+        <div class="tab-pane fade" id="admin" role="tabpanel">
+            <form method="POST" action="{{ url_for('clientes.acciones_masivas') }}">
+                <div class="card border-0 shadow-sm rounded-4 mb-4 bg-light">
+                    <div class="card-body p-4">
+                        <h6 class="fw-bold mb-3 text-dark"><i class="fa-solid fa-gears me-2 text-primary"></i>Acciones en Bloque para las Cuentas Seleccionadas</h6>
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Cambiar Estado:</label>
+                                <select class="form-select shadow-sm" name="nuevo_estado">
+                                    <option value="">-- Sin cambios --</option>
+                                    <option value="Activo">Activo</option>
+                                    <option value="Suspendido">Suspendido</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold">Actualizar Vigencia Plan:</label>
+                                <input type="date" class="form-control shadow-sm" name="nueva_vigencia">
+                            </div>
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-danger shadow-sm w-100 fw-bold" onclick="return confirm('¿Confirma aplicar estos cambios a las empresas seleccionadas?');">
+                                    Aplicar Masivo <i class="fa-solid fa-check ms-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-dark text-white fs-7 text-uppercase">
+                                <tr>
+                                    <th class="py-3 ps-4" style="width: 50px;">
+                                        <input class="form-check-input mt-0" type="checkbox" id="selectAll">
+                                    </th>
+                                    <th class="py-3">Código & Empresa</th>
+                                    <th class="py-3">Estado Actual</th>
+                                    <th class="py-3">Vencimiento Vigente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clientes %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <input class="form-check-input item-checkbox" type="checkbox" name="ids_clientes" value="{{ c.id_cliente }}">
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary font-monospace me-1">{{ c.codigo_invitacion_5d }}</span>
+                                        <span class="fw-bold text-dark">{{ c.nombre_marca }}</span>
+                                    </td>
+                                    <td>{{ c.estado_suscripcion or 'Activo' }}</td>
+                                    <td>{{ c.vigencia_plan.strftime('%d/%m/%Y') if c.vigencia_plan else 'Indefinida' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -86,19 +184,19 @@
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Nombre de la Marca o Clínica *</label>
-                            <input type="text" class="form-control" name="nombre_marca" placeholder="Ej. Renovatia Consultorios" required>
+                            <input type="text" class="form-control" name="nombre_marca" placeholder="Ej. OdontoSalud" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">RUC</label>
-                            <input type="text" class="form-control" name="ruc" placeholder="Ej. 20600000001">
+                            <input type="text" class="form-control" name="ruc" placeholder="Ej. 20600000002">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold small">Nombre de Empresa</label>
-                            <input type="text" class="form-control" name="nombre_empresa" placeholder="Ej. Centro Psicológico Integral S.A.C.">
+                            <label class="form-label fw-semibold small">Razón Social / Nombre de Empresa</label>
+                            <input type="text" class="form-control" name="nombre_empresa" placeholder="Ej. Servicios Médicos S.A.C.">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold small">Dirección Fiscal / Sede</label>
-                            <input type="text" class="form-control" name="direccion" placeholder="Av. Principal 123, Arequipa">
+                            <input type="text" class="form-control" name="direccion" placeholder="Av. Ejercito 456, Arequipa">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Teléfono de Contacto</label>
@@ -112,11 +210,11 @@
                         <h6 class="fw-bold text-primary mb-0">Detalles del Plan y Suscripción</h6>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Tipo de Plan</label>
-                            <input type="text" class="form-control" name="tipo_plan" placeholder="Ej. Plan Profesional Mensual">
+                            <input type="text" class="form-control" name="tipo_plan" placeholder="Ej. Plan Profesional Anual">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Costo / Tarifa (S/.)</label>
-                            <input type="number" step="0.01" class="form-control" name="costo_plan" placeholder="Ej. 150.00">
+                            <input type="number" step="0.01" class="form-control" name="costo_plan" placeholder="Ej. 350.00">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Vigencia del Plan</label>
@@ -177,11 +275,11 @@
                         <h6 class="fw-bold text-primary mb-0">Detalles del Plan y Suscripción</h6>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Tipo de Plan</label>
-                            <input type="text" class="form-control" name="tipo_plan" value="{{ c.tipo_plan or '' }}" placeholder="Ej. Plan Profesional Mensual">
+                            <input type="text" class="form-control" name="tipo_plan" value="{{ c.tipo_plan or '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Costo / Tarifa (S/.)</label>
-                            <input type="number" step="0.01" class="form-control" name="costo_plan" value="{{ c.costo_plan or '' }}" placeholder="Ej. 150.00">
+                            <input type="number" step="0.01" class="form-control" name="costo_plan" value="{{ c.costo_plan or '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Vigencia del Plan</label>
@@ -189,13 +287,14 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Modo de Pago</label>
-                            <input type="text" class="form-control" name="modo_pago" value="{{ c.modo_pago or '' }}" placeholder="Ej. Transferencia BCP / Yape">
+                            <input type="text" class="form-control" name="modo_pago" value="{{ c.modo_pago or '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold small">Estado de Suscripción</label>
                             <select class="form-select" name="estado_suscripcion">
                                 <option value="Activo" {% if c.estado_suscripcion == 'Activo' %}selected{% endif %}>Activo</option>
                                 <option value="Suspendido" {% if c.estado_suscripcion == 'Suspendido' %}selected{% endif %}>Suspendido</option>
+                                <option value="Cancelado" {% if c.estado_suscripcion == 'Cancelado' %}selected{% endif %}>Cancelado</option>
                             </select>
                         </div>
                     </div>
@@ -209,4 +308,32 @@
     </div>
 </div>
 {% endfor %}
+
+<!-- Script para Filtrado en Tiempo Real y Checkboxes -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // 1. Buscador universal instantáneo
+        const buscador = document.getElementById('buscadorUniversal');
+        if(buscador) {
+            buscador.addEventListener('keyup', function() {
+                const term = this.value.toLowerCase();
+                const filas = document.querySelectorAll('.fila-cliente');
+                
+                filas.forEach(fila => {
+                    const contenido = Array.from(fila.querySelectorAll('.search-target')).map(el => el.textContent.toLowerCase()).join(' ');
+                    fila.style.display = contenido.includes(term) ? '' : 'none';
+                });
+            });
+        }
+
+        // 2. Seleccionar todos los checkboxes del panel masivo
+        const selectAll = document.getElementById('selectAll');
+        if(selectAll) {
+            selectAll.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.item-checkbox');
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            });
+        }
+    });
+</script>
 {% endblock %}
