@@ -30,6 +30,7 @@ def role_required(*roles):
 def gestionar_clientes():
     if request.method == 'POST':
         nombre_marca = request.form.get('nombre_marca', '').strip()
+        nombre_empresa = request.form.get('nombre_empresa', '').strip() # Mapeo exacto a Supabase
         ruc = request.form.get('ruc', '').strip()
         direccion = request.form.get('direccion', '').strip()
         telefono = request.form.get('telefono', '').strip()
@@ -40,6 +41,7 @@ def gestionar_clientes():
         else:
             nuevo_cliente = ClienteEmpresa(
                 nombre_marca=nombre_marca,
+                nombre_empresa=nombre_empresa if nombre_empresa else None,
                 ruc=ruc if ruc else None,
                 direccion=direccion if direccion else None,
                 telefono=telefono if telefono else None,
@@ -62,6 +64,7 @@ def editar_cliente(id_cliente):
     cliente = ClienteEmpresa.query.get_or_404(id_cliente)
     
     cliente.nombre_marca = request.form.get('nombre_marca', '').strip()
+    cliente.nombre_empresa = request.form.get('nombre_empresa', '').strip() # Mapeo exacto a Supabase
     cliente.ruc = request.form.get('ruc', '').strip()
     cliente.direccion = request.form.get('direccion', '').strip()
     cliente.telefono = request.form.get('telefono', '').strip()
