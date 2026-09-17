@@ -30,10 +30,41 @@ def role_required(*roles):
             user_role = session.get('user_role')
             if user_role not in roles:
                 flash('No cuenta con los permisos necesarios para acceder a esta sección.', 'danger')
-                return redirect(url_for('dashboard')) # Redirige al dashboard general si no tiene permiso
+                return redirect(url_for('dashboard'))
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+
+# ===========================================================================
+# FUNCIÓN UNIVERSAL PARA CARGAR DATOS Y LOGO DE LA EMPRESA EN LA SESIÓN
+# ===========================================================================
+
+def preparar_sesion_usuario(usuario_o_entidad, rol_asignado, id_cliente):
+    """
+    Función genérica y escalable: registra los datos clave del usuario y 
+    busca automáticamente el logotipo de la empresa para cualquier rol actual o futuro.
+    """
+    session['user_role'] = rol_asignado
+    session['id_cliente'] = id_cliente
+    
+    # Búsqueda universal del logo y datos de la empresa cliente
+    if id_cliente:
+        cliente = ClienteEmpresa.query.get(id_cliente)
+        if cliente and cliente.nombre_marca:
+            session['codigo_empresa'] = cliente.codigo_invitacion_5d
+            session['nombre_marca_cliente'] = cliente.nombre_marca
+            # Limpiamos el nombre para que coincida exactamente con el archivo .png (minúsculas y sin espacios)
+            session['codigo_empresa_logo'] = cliente.nombre_marca.lower().replace(" ", "")
+        else:
+            session.pop('codigo_empresa', None)
+            session.pop('nombre_marca_cliente', None)
+            session.pop('codigo_empresa_logo', None)
+    else:
+        # Si es un Superadmin global sin empresa asignada, limpiamos los rastros de marca blanca
+        session.pop('codigo_empresa', None)
+        session.pop('nombre_marca_cliente', None)
+        session.pop('codigo_empresa_logo', None)
 
 
 # ===========================================================================
@@ -52,21 +83,16 @@ def login():
         logo_cliente = None
 
         if codigo_cliente:
-            # Consultar la base de datos usando el modelo de SQLAlchemy
-            # Consultar la base de datos usando el modelo correcto
             cliente = ClienteEmpresa.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
             
             if cliente and cliente.nombre_marca:
-                # Formatear el nombre (ej. "Renovatia" -> "renovatia")
                 nombre_archivo = cliente.nombre_marca.lower().replace(" ", "")
-                # Generar la ruta hacia la carpeta static/logos/
                 logo_cliente = url_for('static', filename=f'logos/{nombre_archivo}.png')
 
-        # Renderizar la plantilla enviando la variable del logo
         return render_template('login.html', logo_cliente=logo_cliente)
 
     # -----------------------------------------------------------------------
-    # GESTIÓN DEL MÉTODO POST: Validar credenciales (Tu código original)
+    # GESTIÓN DEL MÉTODO POST: Validar credenciales de forma universal
     # -----------------------------------------------------------------------
     if request.method == 'POST':
         correo = request.form.get('correo', '').strip().lower()
@@ -74,20 +100,21 @@ def login():
 
         if not correo or not password:
             flash('Por favor ingrese su correo y contraseña.', 'warning')
-            return redirect(url_for('auth.login', c=request.args.get('c'))) # Mantiene el código en la URL tras un error
+            return redirect(url_for('auth.login', c=request.args.get('c')))
 
-        # 1. Buscar en Usuarios Universales (Superadmin, Administrador, Director, Recepcionista)
+        # 1. Buscar en Usuarios Universales (Superadmin, Administrador, Director, Recepcionista, etc.)
         usuario = UsuarioUni.query.filter_by(correo=correo).first()
         if usuario and usuario.check_password(password):
             if not usuario.estado:
                 flash('Su cuenta se encuentra suspendida. Contacte al administrador.', 'danger')
                 return redirect(url_for('auth.login', c=request.args.get('c')))
             
-            # Registrar datos clave en la sesión
+            # Registrar datos básicos
             session['user_id'] = usuario.id_usuario
             session['user_name'] = usuario.nombres_apellidos
-            session['user_role'] = usuario.rol
-            session['id_cliente'] = usuario.id_cliente # Llave multi-tenant
+            
+            # Carga universal de rol, ID de cliente y logo (aplica para recepcionistas y futuros roles)
+            preparar_sesion_usuario(usuario, usuario.rol, usuario.id_cliente)
             
             flash(f'Bienvenido al sistema, {usuario.nombres_apellidos}', 'success')
             return redirect(url_for('dashboard'))
@@ -101,8 +128,9 @@ def login():
             
             session['user_id'] = especialista.id_especialista
             session['user_name'] = f"{especialista.nombre} {especialista.apellido}"
-            session['user_role'] = 'Especialista'
-            session['id_cliente'] = especialista.id_cliente
+            
+            # Carga universal de rol y logo para especialistas
+            preparar_sesion_usuario(especialista, 'Especialista', especialista.id_cliente)
             
             flash(f'Bienvenido especialista, {especialista.nombre}', 'success')
             return redirect(url_for('dashboard'))
@@ -112,9 +140,10 @@ def login():
         if paciente and paciente.check_password(password):
             session['user_id'] = paciente.id_paciente
             session['user_name'] = f"{paciente.nombre} {paciente.apellido}"
-            session['user_role'] = 'Paciente'
-            session['id_cliente'] = paciente.id_cliente
             session['codigo_7d'] = paciente.codigo_invitacion_7d
+            
+            # Carga universal de rol y logo para pacientes
+            preparar_sesion_usuario(paciente, 'Paciente', paciente.id_cliente)
             
             flash(f'Bienvenido a su portal, {paciente.nombre}', 'success')
             return redirect(url_for('portal_paciente'))
