@@ -50,7 +50,7 @@
         .app-title-cursive {
             font-family: 'Segoe Script', cursive;
             color: #4a235a;
-            font-size: 1.75rem;
+            font-size: 1.15rem;
             font-weight: normal;
         }
         .alert-custom {
@@ -69,13 +69,13 @@
                     
                     <!-- Encabezado con Logo Dinámico del Cliente -->
                     <div class="text-center mb-4">
-                        <div class="mb-3" style="min-height: 70px; display: flex; align-items: center; justify-content: center;">
+                        <div class="mb-3" style="min-height: 120px; display: flex; align-items: center; justify-content: center;">
                             {% if logo_cliente %}
-                                <!-- Muestra el logo desde el enlace público guardado en Supabase -->
-                                <img src="{{ logo_cliente }}" alt="Logo Cliente" style="max-height: 70px; width: auto; object-fit: contain;">
+                                <!-- Muestra el logo desde la ruta generada (70% más grande: 120px) -->
+                                <img src="{{ logo_cliente }}" alt="Logo Cliente" style="max-height: 120px; width: auto; object-fit: contain;">
                             {% else %}
                                 <!-- Respaldo visual si entran sin código o el cliente no tiene logo -->
-                                <i class="fa-solid fa-building-user fs-1 text-primary opacity-50"></i>
+                                <i class="fa-solid fa-building-user text-primary opacity-50" style="font-size: 4rem;"></i>
                             {% endif %}
                         </div>
                         <h2 class="app-title-cursive mb-1">Bienestar App</h2>
