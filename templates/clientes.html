@@ -21,7 +21,7 @@
                         <tr>
                             <th class="py-3 ps-4"># ID</th>
                             <th class="py-3">Marca / Clínica</th>
-                            <th class="py-3">RUC / Razón Social</th>
+                            <th class="py-3">RUC / Empresa</th>
                             <th class="py-3">Contacto</th>
                             <th class="py-3">Estado</th>
                             <th class="py-3 text-end pe-4">Acciones</th>
@@ -89,7 +89,7 @@
                             <input type="text" class="form-control" name="ruc" placeholder="Ej. 20600000001">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold small">Razón Social / Nombre de Empresa</label>
+                            <label class="form-label fw-semibold small">Nombre de Empresa</label>
                             <input type="text" class="form-control" name="nombre_empresa" placeholder="Ej. Centro Psicológico Integral S.A.C.">
                         </div>
                         <div class="col-md-12">
@@ -136,7 +136,7 @@
                             <input type="text" class="form-control" name="ruc" value="{{ c.ruc or '' }}">
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold small">Razón Social / Nombre de Empresa</label>
+                            <label class="form-label fw-semibold small">Nombre de Empresa</label>
                             <input type="text" class="form-control" name="nombre_empresa" value="{{ c.nombre_empresa or '' }}">
                         </div>
                         <div class="col-md-12">
