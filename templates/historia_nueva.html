@@ -8,30 +8,30 @@
         <h1 class="page-title">Ficha Oficial de Admisión e Historia Clínica</h1>
         <p class="page-subtitle">Formato estandarizado de evaluación e historia clínica psicológica</p>
     </div>
-    <a href="{{ url_for('historias') }}" class="btn btn-secondary">
+    <a href="{{ url_for('clinica.listar_historias') }}" class="btn btn-secondary">
         <i class="fa-solid fa-arrow-left"></i>
         <span>Volver a Historias</span>
     </a>
 </div>
 
 <div class="card-panel">
-    <form action="{{ url_for('crear_historia') }}" method="POST">
+    <form action="{{ url_for('clinica.crear_historia') }}" method="POST">
         <!-- Selección de Paciente -->
         <div class="clinical-section" style="background: #e0e7ff; border-color: #c7d2fe;">
             <div class="clinical-section-title" style="color: #3730a3; border-color: #a5b4fc;">
-                <i class="fa-solid fa-user-check"></i> Selección de Cliente / Paciente
+                <i class="fa-solid fa-user-check"></i> Selección de Paciente
             </div>
             <div class="form-group">
-                <label for="id_cliente" class="form-label" style="font-size: 0.95rem;">Seleccionar Cliente Registrado *</label>
-                <select id="id_cliente" name="id_cliente" class="form-select" style="font-size: 1rem; padding: 0.75rem;" required>
+                <label for="id_paciente" class="form-label" style="font-size: 0.95rem;">Seleccionar Paciente Registrado *</label>
+                <select id="id_paciente" name="id_paciente" class="form-select" style="font-size: 1rem; padding: 0.75rem;" required>
                     <option value="">-- Seleccione el paciente para aperturar la historia --</option>
-                    {% for cli in clientes_sin_historia %}
-                    <option value="{{ cli.id_usuario }}">{{ cli.nombres_apellidos }} (Correo: {{ cli.correo }})</option>
+                    {% for cli in pacientes_sin_historia %}
+                    <option value="{{ cli.id_paciente }}">{{ cli.nombre }} {{ cli.apellido }} (DNI: {{ cli.dni }})</option>
                     {% endfor %}
                 </select>
-                {% if not clientes_sin_historia %}
+                {% if not pacientes_sin_historia %}
                 <small style="color: #4338ca; margin-top: 0.35rem; display: block;">
-                    * Todos los clientes registrados ya poseen una historia clínica aperturada.
+                    * Todos los pacientes registrados ya poseen una historia clínica aperturada.
                 </small>
                 {% endif %}
             </div>
@@ -156,7 +156,7 @@
         </div>
 
         <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
-            <a href="{{ url_for('historias') }}" class="btn btn-secondary">Cancelar</a>
+            <a href="{{ url_for('clinica.listar_historias') }}" class="btn btn-secondary">Cancelar</a>
             <button type="submit" class="btn btn-primary" style="padding: 0.75rem 1.5rem; font-size: 1rem;">
                 <i class="fa-solid fa-floppy-disk"></i> Guardar Historia Clínica
             </button>
