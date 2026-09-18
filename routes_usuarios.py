@@ -102,7 +102,7 @@ def nuevo_usuario():
     rol = request.form.get('rol', '').strip()
     codigo_7d_ingresado = request.form.get('codigo_7d', '').strip().upper()
     
-    # Restricción absoluta: Ningún rol local puede crear un Administrador (solo Superadmin desde Clientes)
+    # Restricción absoluta: Ningún rol local puede crear un Administrador
     if rol == 'Administrador':
         flash('La creación del rol Administrador está restringida exclusivamente al Superadmin.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
@@ -117,15 +117,11 @@ def nuevo_usuario():
         flash('Todos los campos obligatorios, incluyendo el código de 7 dígitos, deben ser completados.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Validación estricta del Código de 7 Dígitos generado por el Administrador
+    # Validación de correspondencia de rol (Permite uso indefinido del código para el mismo rol)
     codigo_obj = Codigo7D.query.filter_by(codigo=codigo_7d_ingresado, id_cliente=id_cliente).first()
     
     if not codigo_obj:
         flash('El código de 7 dígitos ingresado no existe para esta empresa.', 'danger')
-        return redirect(url_for('usuarios.gestionar_usuarios'))
-    
-    if codigo_obj.usado:
-        flash('El código de 7 dígitos ingresado ya ha sido utilizado previamente.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
     
     if codigo_obj.rol_destino != rol:
@@ -138,7 +134,7 @@ def nuevo_usuario():
         flash('El correo electrónico ya se encuentra registrado en el sistema.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Crear el usuario y guardar el código asociado
+    # Crear el usuario asociado al código
     nuevo = UsuarioUni(
         nombres_apellidos=nombres,
         dni=dni,
@@ -152,9 +148,6 @@ def nuevo_usuario():
         nuevo.set_password(password)
     else:
         nuevo.set_password('Temp2026*')
-
-    # Marcar el código de 7 dígitos como usado
-    codigo_obj.usado = True
 
     db.session.add(nuevo)
     db.session.commit()
