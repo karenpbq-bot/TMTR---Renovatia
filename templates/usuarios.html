@@ -296,24 +296,19 @@
                         <div class="col-md-12">
                             <label class="form-label fw-semibold small text-primary fw-bold">Código de 7 Dígitos (Obligatorio) *</label>
                             <input type="text" class="form-control font-monospace text-uppercase" name="codigo_7d" placeholder="Ej. A7X9B2K" maxlength="7" required>
-                            <div class="form-text small">Ingrese el código autorizado provisto por la administración.</div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer border-0 px-4 pb-4">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #7c3aed; border: none;">Guardar Cambios</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #7c3aed; border: none;">Crear Usuario</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-{% endfor %}
 
-
-<!-- ================================================================= -->
-<!-- MODALES DE EDICIÓN INDIVIDUALES POR CADA USUARIO -->
-<!-- ================================================================= -->
+<!-- Modales de Edición Individuales -->
 {% for u in usuarios %}
 <div class="modal fade" id="modalEditarUsuario{{ u.id_usuario }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -357,3 +352,5 @@
     </div>
 </div>
 {% endfor %}
+
+{% endblock %}
