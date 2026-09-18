@@ -309,3 +309,50 @@
     </div>
 </div>
 {% endblock %}
+
+<!-- ================================================================= -->
+<!-- MODALES DE EDICIÓN INDIVIDUALES POR CADA USUARIO -->
+<!-- ================================================================= -->
+{% for u in usuarios %}
+<div class="modal fade" id="modalEditarUsuario{{ u.id_usuario }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-light border-0 px-4 py-3">
+                <h5 class="modal-title fw-bold text-dark">✏️ Editar Usuario: {{ u.nombres_apellidos }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('usuarios.editar_usuario', id_usuario=u.id_usuario) }}" method="POST">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Nombres y Apellidos *</label>
+                            <input type="text" name="nombres_apellidos" class="form-control" value="{{ u.nombres_apellidos }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">DNI</label>
+                            <input type="text" name="dni" class="form-control" value="{{ u.dni or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold small">Correo Electrónico *</label>
+                            <input type="email" name="correo" class="form-control" value="{{ u.correo }}" required>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Rol Asignado *</label>
+                            <select name="rol" class="form-select" required>
+                                <option value="Director" {% if u.rol == 'Director' %}selected{% endif %}>Director</option>
+                                <option value="Recepcionista" {% if u.rol == 'Recepcionista' %}selected{% endif %}>Recepcionista</option>
+                                <option value="Especialista" {% if u.rol == 'Especialista' %}selected{% endif %}>Especialista</option>
+                                <option value="Paciente" {% if u.rol == 'Paciente' %}selected{% endif %}>Paciente</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm" style="background-color: #7c3aed; border: none;">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
