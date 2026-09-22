@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, UsuarioUni, ClienteEmpresa, Codigo7D  # Asumiendo el modelo Codigo7D para los códigos de 7 dígitos
+from models import db, UsuarioUni, ClienteEmpresa, Codigo7D, PacienteUni
 from functools import wraps
 import random
 import string
@@ -68,7 +68,7 @@ def gestionar_usuarios():
     usuarios = query.order_by(UsuarioUni.id_usuario.desc()).all()
     clientes = ClienteEmpresa.query.all() if rol == 'Superadmin' else []
 
-    # Obtener la lista de códigos de 7 dígitos generados para esta empresa (si es Administrador o Superadmin)
+    # Obtener la lista de códigos de 7 dígitos generados para esta empresa
     codigos_7d_lista = []
     if rol == 'Administrador':
         codigos_7d_lista = Codigo7D.query.filter_by(id_cliente=cliente_id).order_by(Codigo7D.id.desc()).all()
@@ -85,7 +85,7 @@ def gestionar_usuarios():
 
 
 # ===========================================================================
-# 2. CREACIÓN DE NUEVO USUARIO (Exige Código de 7 Dígitos Válido)
+# 2. CREACIÓN DE NUEVO USUARIO (Con sincronización para Pacientes y Especialistas)
 # ===========================================================================
 
 @usuarios_bp.route('/usuarios/nuevo', methods=['POST'])
@@ -117,7 +117,7 @@ def nuevo_usuario():
         flash('Todos los campos obligatorios, incluyendo el código de 7 dígitos, deben ser completados.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Validación de correspondencia de rol (Permite uso indefinido del código para el mismo rol)
+    # Validación del Código de 7 Dígitos
     codigo_obj = Codigo7D.query.filter_by(codigo=codigo_7d_ingresado, id_cliente=id_cliente).first()
     
     if not codigo_obj:
@@ -134,7 +134,7 @@ def nuevo_usuario():
         flash('El correo electrónico ya se encuentra registrado en el sistema.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Crear el usuario asociado al código
+    # Crear el usuario en la tabla general UsuarioUni
     nuevo = UsuarioUni(
         nombres_apellidos=nombres,
         dni=dni,
@@ -150,9 +150,29 @@ def nuevo_usuario():
         nuevo.set_password('Temp2026*')
 
     db.session.add(nuevo)
+
+    # Si el rol es Paciente, registrarlo también en PacienteUni para la agenda clínica
+    if rol == 'Paciente':
+        partes_nombre = nombres.split(' ', 1)
+        nombre_p = partes_nombre[0]
+        apellido_p = partes_nombre[1] if len(partes_nombre) > 1 else 'Sin Apellido'
+        
+        paciente_existente = PacienteUni.query.filter_by(email=correo).first()
+        if not paciente_existente:
+            nuevo_paciente = PacienteUni(
+                id_cliente=id_cliente,
+                nombre=nombre_p,
+                apellido=apellido_p,
+                email=correo,
+                dni=dni,
+                codigo_invitacion_7d=codigo_7d_ingresado
+            )
+            nuevo_paciente.set_password(password if password else 'Temp2026*')
+            db.session.add(nuevo_paciente)
+
     db.session.commit()
     
-    flash(f'Usuario "{nombres}" registrado exitosamente con el código {codigo_7d_ingresado}.', 'success')
+    flash(f'Usuario "{nombres}" ({rol}) registrado exitosamente.', 'success')
     return redirect(url_for('usuarios.gestionar_usuarios'))
 
 
@@ -172,7 +192,6 @@ def generar_codigo_7d():
         flash('Debe especificar el rol de destino para el código.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Bucle para asegurar que el código aleatorio sea único
     while True:
         caracteres = string.ascii_uppercase + string.digits
         codigo_aleatorio = ''.join(random.choice(caracteres) for _ in range(7))
@@ -264,6 +283,7 @@ def eliminar_usuario(id_usuario):
         
     return redirect(url_for('usuarios.gestionar_usuarios'))
 
+
 # ===========================================================================
 # 5. PANEL SUPERADMIN: RESTABLECIMIENTO Y EXTRACCIÓN DE CLAVE TEMPORAL
 # ===========================================================================
@@ -274,13 +294,11 @@ def eliminar_usuario(id_usuario):
 def superadmin_reset_password(id_usuario):
     usuario = UsuarioUni.query.get_or_404(id_usuario)
     
-    # Generar una clave temporal de 9 caracteres alfanuméricos
     caracteres = string.ascii_letters + string.digits
     nueva_clave = ''.join(random.choice(caracteres) for _ in range(9))
     
     usuario.set_password(nueva_clave)
     db.session.commit()
     
-    # Mensaje codificado para que el Superadmin pueda extraerlo y copiarlo
     flash(f'ÉXITO_CLAVE::{usuario.correo}::{nueva_clave}', 'temporal_generada')
     return redirect(url_for('usuarios.gestionar_usuarios'))
