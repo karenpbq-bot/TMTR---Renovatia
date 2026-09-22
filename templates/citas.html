@@ -117,7 +117,10 @@
                         <select name="id_paciente" class="form-select" required>
                             <option value="">-- Seleccionar Paciente --</option>
                             {% for p in pacientes %}
-                            <option value="{{ p.id_paciente }}">{{ p.nombre }} {{ p.apellido }} (DNI: {{ p.dni }})</option>
+                            <option value="{{ p.id_paciente if p.id_paciente is defined else p.id_usuario }}">
+                                {{ p.nombre ~ ' ' ~ p.apellido if p.nombre else p.nombres_apellidos }} 
+                                (DNI: {{ p.dni or 'N/A' }})
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
@@ -127,7 +130,9 @@
                         <select name="id_especialista" class="form-select" required>
                             <option value="">-- Seleccionar Especialista --</option>
                             {% for esp in especialistas %}
-                            <option value="{{ esp.id_especialista }}">{{ esp.nombre }} {{ esp.apellido }}</option>
+                            <option value="{{ esp.id_especialista if esp.id_especialista is defined else esp.id_usuario }}">
+                                {{ esp.nombre ~ ' ' ~ esp.apellido if esp.nombre else esp.nombres_apellidos }}
+                            </option>
                             {% endfor %}
                         </select>
                     </div>
