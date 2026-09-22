@@ -56,14 +56,25 @@ def gestionar_citas():
     # Filtrado Multi-Tenant para el listado de citas
     if rol == 'Superadmin':
         lista_citas = CitaUni.query.order_by(CitaUni.fecha_hora_inicio.desc()).all()
+        pacientes = PacienteUni.query.all()
+        # Obtener especialistas tanto de UsuarioUni como de EspecialistaUni si existen
+        especialistas = UsuarioUni.query.filter_by(rol='Especialista').all()
     elif rol == 'Especialista':
         id_especialista = session.get('user_id')
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id, id_especialista=id_especialista).order_by(CitaUni.fecha_hora_inicio.desc()).all()
+        pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
+        especialistas = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
     else:
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.desc()).all()
-
-    pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
-    especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
+        # Consultar pacientes unificados de ambas fuentes posibles para garantizar visibilidad
+        pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
+        if not pacientes:
+            pacientes = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
+            
+        # Consultar especialistas unificados
+        especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
+        if not especialistas:
+            especialistas = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
 
     return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
