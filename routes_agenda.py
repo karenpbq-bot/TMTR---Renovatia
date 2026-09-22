@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, CitaUni, PacienteUni, EspecialistaUni, ReprogramacionUni, DisponibilidadUni, get_peru_time
+from models import db, CitaUni, PacienteUni, EspecialistaUni, UsuarioUni, ReprogramacionUni, DisponibilidadUni, get_peru_time
 from datetime import datetime, timedelta
 from routes_auth import login_required, role_required
 
@@ -8,7 +8,7 @@ agenda_bp = Blueprint('agenda', __name__)
 @agenda_bp.route('/citas', methods=['GET', 'POST'])
 @login_required
 def gestionar_citas():
-    """Gestiona el listado y la creación de citas filtradas por la organización del usuario con validación de solapes"""
+    """Gestiona el listado y la creación de citas unificando pacientes y especialistas de ambas tablas"""
     cliente_id = session.get('id_cliente')
     rol = session.get('user_role')
     
@@ -19,11 +19,9 @@ def gestionar_citas():
         motivo = request.form.get('motivo_reserva', '')
 
         try:
-            # Parsear la fecha y hora enviada desde el formulario
             fecha_hora_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
-            fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=45) # Estándar de sesión clínica
+            fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=45)
 
-            # VALIDACIÓN DE SOLAPES: Verificar si el especialista ya tiene una cita activa en ese rango
             solapada = CitaUni.query.filter(
                 CitaUni.id_especialista == int(id_especialista),
                 CitaUni.estado_cita != 'Cancelada',
@@ -56,37 +54,39 @@ def gestionar_citas():
     # Filtrado Multi-Tenant para el listado de citas
     if rol == 'Superadmin':
         lista_citas = CitaUni.query.order_by(CitaUni.fecha_hora_inicio.desc()).all()
-        pacientes = PacienteUni.query.all()
-        # Obtener especialistas tanto de UsuarioUni como de EspecialistaUni si existen
-        especialistas = UsuarioUni.query.filter_by(rol='Especialista').all()
     elif rol == 'Especialista':
         id_especialista = session.get('user_id')
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id, id_especialista=id_especialista).order_by(CitaUni.fecha_hora_inicio.desc()).all()
-        # Obtener pacientes tanto de la tabla PacienteUni como de UsuarioUni con rol Paciente
-        pacientes_tabla = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
-        pacientes_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
-    
-        # Unir ambas listas evitando duplicados por correo o ID
-        pacientes_dict = {p.email if hasattr(p, 'email') else p.correo: p for p in pacientes_tabla + pacientes_usuarios}
-        pacientes = list(pacientes_dict.values())
-
-        # Obtener especialistas de ambas fuentes posibles
-        especialistas_tabla = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
-        especialistas_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
-    
-        especialistas_dict = {e.email if hasattr(e, 'email') else e.correo: e for e in especialistas_tabla + especialistas_usuarios}
-        especialistas = list(especialistas_dict.values())
     else:
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.desc()).all()
-        # Consultar pacientes unificados de ambas fuentes posibles para garantizar visibilidad
-        pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
-        if not pacientes:
-            pacientes = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
-            
-        # Consultar especialistas unificados
-        especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
-        if not especialistas:
-            especialistas = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
+
+    # UNIFICACIÓN TOTAL: Capturar pacientes de ambas tablas (PacienteUni y UsuarioUni con rol Paciente)
+    pacientes_tabla = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
+    pacientes_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
+    
+    pacientes_dict = {}
+    for p in pacientes_tabla:
+        key = getattr(p, 'email', None) or getattr(p, 'dni', None) or p.id_paciente
+        pacientes_dict[key] = p
+    for u in pacientes_usuarios:
+        key = getattr(u, 'correo', None) or getattr(u, 'dni', None) or u.id_usuario
+        if key not in pacientes_dict:
+            pacientes_dict[key] = u
+    pacientes = list(pacientes_dict.values())
+
+    # UNIFICACIÓN TOTAL: Capturar especialistas de ambas tablas (EspecialistaUni y UsuarioUni con rol Especialista)
+    especialistas_tabla = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
+    especialistas_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
+    
+    especialistas_dict = {}
+    for e in especialistas_tabla:
+        key = getattr(e, 'email', None) or e.id_especialista
+        especialistas_dict[key] = e
+    for u in especialistas_usuarios:
+        key = getattr(u, 'correo', None) or u.id_usuario
+        if key not in especialistas_dict:
+            especialistas_dict[key] = u
+    especialistas = list(especialistas_dict.values())
 
     return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
@@ -95,7 +95,7 @@ def gestionar_citas():
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista', 'Especialista')
 def cambiar_estado_cita(id_cita):
-    """Permite actualizar el estado de una cita (Programada, Cancelada, etc.) liberando horario si se cancela"""
+    """Permite actualizar el estado de una cita"""
     cita = CitaUni.query.get_or_404(id_cita)
     nuevo_estado = request.form.get('estado_cita')
     
@@ -113,7 +113,7 @@ def cambiar_estado_cita(id_cita):
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista', 'Especialista')
 def reprogramar_cita(id_cita):
-    """Permite cambiar la fecha/hora de una cita existente registrando auditoría en uni_reprogramaciones"""
+    """Permite cambiar la fecha/hora de una cita existente"""
     cita = CitaUni.query.get_or_404(id_cita)
     nueva_fecha_str = request.form.get('nueva_fecha_hora')
     motivo = request.form.get('motivo_reprogramacion', 'Reprogramación de cita')
@@ -123,7 +123,6 @@ def reprogramar_cita(id_cita):
         duracion = cita.fecha_hora_fin - cita.fecha_hora_inicio
         nueva_fin = nueva_inicio + duracion
 
-        # Validar solapes excluyendo la propia cita actual
         solapada = CitaUni.query.filter(
             CitaUni.id_especialista == cita.id_especialista,
             CitaUni.id_cita != cita.id_cita,
@@ -136,7 +135,6 @@ def reprogramar_cita(id_cita):
             flash('⚠️ No se puede reprogramar: El nuevo horario presenta un cruce con otra cita activa.', 'danger')
             return redirect(url_for('agenda.gestionar_citas'))
 
-        # Registrar auditoría en la tabla uni_reprogramaciones
         reprogramacion = ReprogramacionUni(
             id_cita=cita.id_cita,
             id_cliente=cita.id_cliente,
@@ -146,7 +144,6 @@ def reprogramar_cita(id_cita):
             realizado_por=session.get('user_name', session.get('user_role', 'Sistema'))
         )
 
-        # Actualizar tiempos de la cita
         cita.fecha_hora_inicio = nueva_inicio
         cita.fecha_hora_fin = nueva_fin
         cita.estado_cita = 'Programada'
@@ -162,14 +159,10 @@ def reprogramar_cita(id_cita):
     return redirect(url_for('agenda.gestionar_citas'))
 
 
-# ===========================================================================
-# GESTIÓN DE DISPONIBILIDAD HORARIA DEL ESPECIALISTA (Plantilla y Excepciones)
-# ===========================================================================
-
 @agenda_bp.route('/disponibilidad', methods=['GET', 'POST'])
 @login_required
 def gestionar_disponibilidad():
-    """Gestiona la plantilla semanal, replicación de horarios y excepciones mensuales por especialista"""
+    """Gestiona la plantilla semanal y excepciones del especialista"""
     cliente_id = session.get('id_cliente')
     rol = session.get('user_role')
     user_id = session.get('user_id')
@@ -187,7 +180,6 @@ def gestionar_disponibilidad():
             return redirect(url_for('agenda.gestionar_disponibilidad'))
 
         try:
-            # ACCIÓN 1: Replicar Lunes a toda la semana
             if accion == 'replicar_lunes':
                 lunes_base = DisponibilidadUni.query.filter_by(
                     id_especialista=especialista_id,
@@ -227,7 +219,6 @@ def gestionar_disponibilidad():
                 db.session.commit()
                 flash('¡Horario del Lunes replicado exitosamente a toda la semana!', 'success')
 
-            # ACCIÓN 2: Guardar Plantilla Semanal (Día por día)
             elif accion == 'guardar_plantilla':
                 dia_semana = request.form.get('dia_semana')
                 hora_inicio = request.form.get('hora_inicio') or None
@@ -261,7 +252,6 @@ def gestionar_disponibilidad():
                 db.session.commit()
                 flash(f'Plantilla para {dia_semana} actualizada correctamente.', 'success')
 
-            # ACCIÓN 3: Guardar Excepción por Fecha Específica del Mes
             elif accion == 'guardar_excepcion':
                 fecha_str = request.form.get('fecha_especifica')
                 hora_inicio = request.form.get('hora_inicio') or None
