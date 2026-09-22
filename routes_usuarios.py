@@ -117,7 +117,7 @@ def nuevo_usuario():
         flash('Todos los campos obligatorios, incluyendo el código de 7 dígitos, deben ser completados.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Validación del Código de 7 Dígitos
+    # Validación de correspondencia del Código de 7 Dígitos
     codigo_obj = Codigo7D.query.filter_by(codigo=codigo_7d_ingresado, id_cliente=id_cliente).first()
     
     if not codigo_obj:
@@ -128,13 +128,13 @@ def nuevo_usuario():
         flash(f'Este código de 7 dígitos está asignado para el rol "{codigo_obj.rol_destino}", no para "{rol}".', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Verificar si el correo ya existe
+    # Verificar si el correo ya existe en usuarios
     existe = UsuarioUni.query.filter_by(correo=correo).first()
     if existe:
         flash('El correo electrónico ya se encuentra registrado en el sistema.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Crear el usuario en la tabla general UsuarioUni
+    # 1. Crear el usuario en la tabla general UsuarioUni
     nuevo = UsuarioUni(
         nombres_apellidos=nombres,
         dni=dni,
@@ -151,12 +151,14 @@ def nuevo_usuario():
 
     db.session.add(nuevo)
 
-    # Si el rol es Paciente, registrarlo también en PacienteUni para la agenda clínica
+    # 2. SINCRONIZACIÓN AUTOMÁTICA CON TABLAS CLÍNICAS EN SUPABASE
     if rol == 'Paciente':
+        from models import PacienteUni
         partes_nombre = nombres.split(' ', 1)
         nombre_p = partes_nombre[0]
         apellido_p = partes_nombre[1] if len(partes_nombre) > 1 else 'Sin Apellido'
         
+        # Verificar si ya existe en uni_pacientes
         paciente_existente = PacienteUni.query.filter_by(email=correo).first()
         if not paciente_existente:
             nuevo_paciente = PacienteUni(
@@ -164,15 +166,34 @@ def nuevo_usuario():
                 nombre=nombre_p,
                 apellido=apellido_p,
                 email=correo,
-                dni=dni,
+                dni=dni if dni else f"DNI_{random.randint(100000,999999)}", # Evita error si falta DNI
                 codigo_invitacion_7d=codigo_7d_ingresado
             )
             nuevo_paciente.set_password(password if password else 'Temp2026*')
             db.session.add(nuevo_paciente)
 
+    elif rol == 'Especialista':
+        from models import EspecialistaUni
+        partes_nombre = nombres.split(' ', 1)
+        nombre_e = partes_nombre[0]
+        apellido_e = partes_nombre[1] if len(partes_nombre) > 1 else 'Sin Apellido'
+        
+        # Verificar si ya existe en uni_especialistas
+        especialista_existente = EspecialistaUni.query.filter_by(email=correo).first()
+        if not especialista_existente:
+            nuevo_especialista = EspecialistaUni(
+                id_cliente=id_cliente,
+                nombre=nombre_e,
+                apellido=apellido_e,
+                email=correo,
+                telefono=None
+            )
+            nuevo_especialista.set_password(password if password else 'Temp2026*')
+            db.session.add(nuevo_especialista)
+
     db.session.commit()
     
-    flash(f'Usuario "{nombres}" ({rol}) registrado exitosamente.', 'success')
+    flash(f'Usuario "{nombres}" ({rol}) registrado exitosamente y sincronizado en Supabase.', 'success')
     return redirect(url_for('usuarios.gestionar_usuarios'))
 
 
