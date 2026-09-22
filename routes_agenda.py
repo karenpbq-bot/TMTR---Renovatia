@@ -62,8 +62,20 @@ def gestionar_citas():
     elif rol == 'Especialista':
         id_especialista = session.get('user_id')
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id, id_especialista=id_especialista).order_by(CitaUni.fecha_hora_inicio.desc()).all()
-        pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
-        especialistas = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
+        # Obtener pacientes tanto de la tabla PacienteUni como de UsuarioUni con rol Paciente
+        pacientes_tabla = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
+        pacientes_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
+    
+        # Unir ambas listas evitando duplicados por correo o ID
+        pacientes_dict = {p.email if hasattr(p, 'email') else p.correo: p for p in pacientes_tabla + pacientes_usuarios}
+        pacientes = list(pacientes_dict.values())
+
+        # Obtener especialistas de ambas fuentes posibles
+        especialistas_tabla = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
+        especialistas_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
+    
+        especialistas_dict = {e.email if hasattr(e, 'email') else e.correo: e for e in especialistas_tabla + especialistas_usuarios}
+        especialistas = list(especialistas_dict.values())
     else:
         lista_citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.desc()).all()
         # Consultar pacientes unificados de ambas fuentes posibles para garantizar visibilidad
