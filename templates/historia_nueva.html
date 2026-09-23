@@ -40,36 +40,64 @@
         <!-- 1. Ficha de Identificación -->
         <div class="clinical-section">
             <div class="clinical-section-title">
-                <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación
+                <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación (Contexto)
             </div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="fecha_nacimiento" class="form-label">Fecha de Nacimiento</label>
-                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label for="edad" class="form-label">Edad (Años)</label>
-                    <input type="number" id="edad" name="edad" class="form-control" placeholder="Ej. 25">
-                </div>
-                <div class="form-group">
-                    <label for="procedencia" class="form-label">Procedencia / Ciudad</label>
-                    <input type="text" id="procedencia" name="procedencia" class="form-control" placeholder="Ej. Lima, Perú">
+                    <label for="nro_historia" class="form-label">Nro. de Historia (DNI/CE)</label>
+                    <input type="text" id="nro_historia" name="nro_historia" class="form-control" maxlength="15" placeholder="Documento del paciente" required>
                 </div>
                 <div class="form-group">
                     <label for="grado_instruccion" class="form-label">Grado de Instrucción</label>
-                    <input type="text" id="grado_instruccion" name="grado_instruccion" class="form-control" placeholder="Ej. Superior Universitario">
+                    <select id="grado_instruccion" name="grado_instruccion" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="Primaria completa">Primaria completa</option>
+                        <option value="Secundaria completa">Secundaria completa</option>
+                        <option value="Estudios universitarios en curso">Estudios universitarios en curso</option>
+                        <option value="Estudios técnicos en curso">Estudios técnicos en curso</option>
+                        <option value="Estudios universitarios completos">Estudios universitarios completos</option>
+                        <option value="Estudios técnicos completos">Estudios técnicos completos</option>
+                        <option value="Estudios de posgrado en curso">Estudios de posgrado en curso</option>
+                        <option value="Estudios de postgrado completos">Estudios de postgrado completos</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="institucion" class="form-label">Institución Educativa / Centro Laboral</label>
-                    <input type="text" id="institucion" name="institucion" class="form-control" placeholder="Ej. Universidad Nacional">
+                    <label for="ocupacion_actual" class="form-label">Ocupación Actual</label>
+                    <input type="text" id="ocupacion_actual" name="ocupacion_actual" class="form-control" maxlength="25" placeholder="Ej. Estudiante">
                 </div>
                 <div class="form-group">
-                    <label for="nombres_padres" class="form-label">Nombres de los Padres / Apoderados</label>
-                    <input type="text" id="nombres_padres" name="nombres_padres" class="form-control" placeholder="Ej. Carlos Gómez / María Silva">
+                    <label for="estado_civil" class="form-label">Estado Civil</label>
+                    <select id="estado_civil" name="estado_civil" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="Soltero(a)">Soltero(a)</option>
+                        <option value="Casado(a)">Casado(a)</option>
+                        <option value="Viudo(a)">Viudo(a)</option>
+                        <option value="Divorciado(a)">Divorciado(a)</option>
+                        <option value="Separado(a)">Separado(a)</option>
+                        <option value="Conviviente">Conviviente</option>
+                    </select>
                 </div>
                 <div class="form-group">
-                    <label for="telefono" class="form-label">Teléfono de Contacto</label>
-                    <input type="text" id="telefono" name="telefono" class="form-control" placeholder="Ej. +51 987654321">
+                    <label for="religion" class="form-label">Religión</label>
+                    <input type="text" id="religion" name="religion" class="form-control" maxlength="20" placeholder="Ej. Católica">
+                </div>
+                <div class="form-group">
+                    <label for="nombre_acompanante" class="form-label">Nombre de Acompañante (Opcional)</label>
+                    <input type="text" id="nombre_acompanante" name="nombre_acompanante" class="form-control" maxlength="25" placeholder="Nombre completo">
+                </div>
+                <div class="form-group">
+                    <label for="parentesco_acompanante" class="form-label">Parentesco</label>
+                    <select id="parentesco_acompanante" name="parentesco_acompanante" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="Madre">Madre</option>
+                        <option value="Padre">Padre</option>
+                        <option value="Hermano(a)">Hermano(a)</option>
+                        <option value="Hijo(a)">Hijo(a)</option>
+                        <option value="Amigo(a)">Amigo(a)</option>
+                        <option value="Tutor">Tutor</option>
+                        <option value="Conyuge">Cónyuge</option>
+                        <option value="Pareja">Pareja</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -77,45 +105,71 @@
         <!-- 2. Motivo de Consulta -->
         <div class="clinical-section">
             <div class="clinical-section-title">
-                <i class="fa-solid fa-comment-medical"></i> 2. Motivo de Consulta
+                <i class="fa-solid fa-comment-medical"></i> 2. Motivo y Problema Actual
             </div>
             <div class="form-group">
-                <label for="motivo_consulta" class="form-label">Descripción textual del motivo de consulta expresado por el paciente o tutor</label>
-                <textarea id="motivo_consulta" name="motivo_consulta" class="form-control" rows="3" placeholder="Ej. El paciente refiere cuadros de insomnio persistente y dificultad para concentrarse en jornada laboral..."></textarea>
+                <label for="motivo_consulta" class="form-label">Motivo de Consulta (Máx. 150 caracteres)</label>
+                <textarea id="motivo_consulta" name="motivo_consulta" class="form-control" rows="2" maxlength="150" placeholder="Lo que refiere el paciente en sus propias palabras..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="tiempo_enfermedad" class="form-label">Tiempo de Enfermedad (Curso)</label>
+                <input type="text" id="tiempo_enfermedad" name="tiempo_enfermedad" class="form-control" maxlength="25" placeholder="Ej. Hace 6 meses">
+            </div>
+            <div class="form-group">
+                <label for="sintomatologia_principal" class="form-label">Sintomatología Principal (Máx. 150 caracteres)</label>
+                <textarea id="sintomatologia_principal" name="sintomatologia_principal" class="form-control" rows="2" maxlength="150" placeholder="Descripción clínica del problema actual..."></textarea>
             </div>
         </div>
 
-        <!-- 3. Anamnesis Psicológica -->
+        <!-- 3. Anamnesis y Antecedentes -->
         <div class="clinical-section">
             <div class="clinical-section-title">
-                <i class="fa-solid fa-clipboard-question"></i> 3. Anamnesis Psicológica (Antecedentes)
+                <i class="fa-solid fa-clipboard-question"></i> 3. Anamnesis y Antecedentes (Máx. 150 caracteres c/u)
             </div>
             <div class="form-group">
-                <label for="problema_actual" class="form-label">Problema Actual y Sintomatología Principales</label>
-                <textarea id="problema_actual" name="problema_actual" class="form-control" rows="3" placeholder="Inicio de los síntomas, frecuencia, intensidad y factores desencadenantes..."></textarea>
+                <label for="antecedentes_personales_psicologicos" class="form-label">Personales y Psicológicos</label>
+                <textarea id="antecedentes_personales_psicologicos" name="antecedentes_personales_psicologicos" class="form-control" rows="2" maxlength="150" placeholder="Terapias previas, cuadros similares..."></textarea>
             </div>
             <div class="form-group">
-                <label for="historia_desarrollo" class="form-label">Historia de Desarrollo (Etapa Prenatal, Infancia, Hitos)</label>
-                <textarea id="historia_desarrollo" name="historia_desarrollo" class="form-control" rows="2" placeholder="Hitos del desarrollo psicomotor, lenguaje, autonomía..."></textarea>
+                <label for="antecedentes_medicos_relevantes" class="form-label">Médicos Relevantes</label>
+                <textarea id="antecedentes_medicos_relevantes" name="antecedentes_medicos_relevantes" class="form-control" rows="2" maxlength="150" placeholder="Alergias, cirugías, enfermedades crónicas..."></textarea>
             </div>
             <div class="form-group">
-                <label for="historia_escolar_social" class="form-label">Historia Escolar y Social</label>
-                <textarea id="historia_escolar_social" name="historia_escolar_social" class="form-control" rows="2" placeholder="Adaptación escolar, rendimiento académico, habilidades sociales e interpersonales..."></textarea>
+                <label for="antecedentes_familiares" class="form-label">Familiares</label>
+                <textarea id="antecedentes_familiares" name="antecedentes_familiares" class="form-control" rows="2" maxlength="150" placeholder="Antecedentes psiquiátricos o médicos familiares..."></textarea>
             </div>
             <div class="form-group">
-                <label for="dinamica_familiar" class="form-label">Dinámica y Estructura Familiar</label>
-                <textarea id="dinamica_familiar" name="dinamica_familiar" class="form-control" rows="2" placeholder="Relación con padres, hermanos, estilos de crianza y comunicación en el hogar..."></textarea>
+                <label for="historia_desarrollo_social" class="form-label">Historia de Desarrollo y Social</label>
+                <textarea id="historia_desarrollo_social" name="historia_desarrollo_social" class="form-control" rows="2" maxlength="150" placeholder="Infancia, rendimiento académico, dinámica familiar..."></textarea>
             </div>
         </div>
 
         <!-- 4. Diagnóstico Clínico (CIE-11 / DSM-5) -->
         <div class="clinical-section">
             <div class="clinical-section-title">
-                <i class="fa-solid fa-notes-medical"></i> 4. Diagnóstico Clínico (CIE-11 / DSM-5)
+                <i class="fa-solid fa-notes-medical"></i> 4. Evaluación y Diagnóstico
             </div>
             <div class="form-group">
-                <label for="codigo_cie11_dsm5" class="form-label">Impresión Diagnóstica y Códigos Oficiales</label>
-                <textarea id="codigo_cie11_dsm5" name="codigo_cie11_dsm5" class="form-control" rows="2" placeholder="Ej. CIE-11: 6B00 Trastorno de Ansiedad Generalizada / DSM-5: 300.02 (F41.1)"></textarea>
+                <label for="examen_mental_estado_actual" class="form-label">Examen Mental / Estado Actual (Máx. 150 caracteres)</label>
+                <textarea id="examen_mental_estado_actual" name="examen_mental_estado_actual" class="form-control" rows="2" maxlength="150" placeholder="Orientación, memoria, lenguaje, afecto..."></textarea>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="codigo_diagnostico" class="form-label">Código CIE-10/DSM-5</label>
+                    <input type="text" id="codigo_diagnostico" name="codigo_diagnostico" class="form-control" maxlength="20" placeholder="Ej. F32.1">
+                </div>
+                <div class="form-group">
+                    <label for="tipo_diagnostico" class="form-label">Tipo de Diagnóstico</label>
+                    <select id="tipo_diagnostico" name="tipo_diagnostico" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="Presuntivo">Presuntivo</option>
+                        <option value="Definitivo">Definitivo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="descripcion_diagnostico" class="form-label">Descripción Diagnóstica</label>
+                <input type="text" id="descripcion_diagnostico" name="descripcion_diagnostico" class="form-control" maxlength="100" placeholder="Ej. Episodio depresivo moderado">
             </div>
         </div>
 
@@ -125,32 +179,22 @@
                 <i class="fa-solid fa-list-check"></i> 5. Plan de Intervención Terapéutica
             </div>
             <div class="form-group">
-                <label for="objetivos_menor" class="form-label">Objetivos Terapéuticos Directos (Paciente)</label>
-                <textarea id="objetivos_menor" name="objetivos_menor" class="form-control" rows="2" placeholder="Técnicas de reestructuración cognitiva, manejo del estrés, regulación emocional..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="objetivos_padres" class="form-label">Objetivos para los Padres / Familia</label>
-                <textarea id="objetivos_padres" name="objetivos_padres" class="form-control" rows="2" placeholder="Pautas de psicoeducación, límites asertivos, reforzamiento positivo..."></textarea>
-            </div>
-            <div class="form-group">
-                <label for="coordinacion_externa" class="form-label">Coordinación Externa (Médica / Escolar / Psiquiátrica)</label>
-                <textarea id="coordinacion_externa" name="coordinacion_externa" class="form-control" rows="2" placeholder="Derivación a neurología, psiquiatría o informes a departamento psicopedagógico..."></textarea>
-            </div>
-        </div>
-
-        <!-- 6. Profesional Responsable -->
-        <div class="clinical-section">
-            <div class="clinical-section-title">
-                <i class="fa-solid fa-user-doctor"></i> 6. Firma y Registro del Especialista
+                <label for="objetivos_terapeuticos" class="form-label">Objetivos Terapéuticos (Máx. 150 caracteres)</label>
+                <textarea id="objetivos_terapeuticos" name="objetivos_terapeuticos" class="form-control" rows="2" maxlength="150" placeholder="Metas del tratamiento..."></textarea>
             </div>
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="psicologo_responsable" class="form-label">Psicólogo(a) Responsable</label>
-                    <input type="text" id="psicologo_responsable" name="psicologo_responsable" class="form-control" value="{{ current_user_name }}" required>
+                    <label for="tipo_intervencion" class="form-label">Tipo de Intervención</label>
+                    <input type="text" id="tipo_intervencion" name="tipo_intervencion" class="form-control" maxlength="30" placeholder="Ej. Terapia Cognitivo Conductual">
                 </div>
                 <div class="form-group">
-                    <label for="colegiatura_csp" class="form-label">Número de Colegiatura C.Ps.P.</label>
-                    <input type="text" id="colegiatura_csp" name="colegiatura_csp" class="form-control" placeholder="Ej. C.Ps.P. 28491" required>
+                    <label for="pronostico" class="form-label">Pronóstico</label>
+                    <select id="pronostico" name="pronostico" class="form-select">
+                        <option value="">Seleccionar...</option>
+                        <option value="Favorable">Favorable</option>
+                        <option value="Reservado">Reservado</option>
+                        <option value="Desfavorable">Desfavorable</option>
+                    </select>
                 </div>
             </div>
         </div>
