@@ -94,6 +94,7 @@ def gestionar_citas():
 @agenda_bp.route('/citas/<int:id_cita>/estado', methods=['POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista', 'Especialista')
+
 def cambiar_estado_cita(id_cita):
     """Permite actualizar el estado de una cita"""
     cita = CitaUni.query.get_or_404(id_cita)
@@ -112,6 +113,7 @@ def cambiar_estado_cita(id_cita):
 @agenda_bp.route('/citas/<int:id_cita>/reprogramar', methods=['POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista', 'Especialista')
+
 def reprogramar_cita(id_cita):
     """Permite cambiar la fecha/hora de una cita existente"""
     cita = CitaUni.query.get_or_404(id_cita)
@@ -161,6 +163,7 @@ def reprogramar_cita(id_cita):
 
 @agenda_bp.route('/disponibilidad', methods=['GET', 'POST'])
 @login_required
+
 def gestionar_disponibilidad():
     """Gestiona la plantilla semanal y excepciones del especialista"""
     cliente_id = session.get('id_cliente')
@@ -221,10 +224,15 @@ def gestionar_disponibilidad():
 
             elif accion == 'guardar_plantilla':
                 dia_semana = request.form.get('dia_semana')
-                hora_inicio = request.form.get('hora_inicio') or None
-                hora_fin = request.form.get('hora_fin') or None
-                intervalo = request.form.get('intervalo_minutos', 45)
+                hora_inicio_str = request.form.get('hora_inicio')
+                hora_fin_str = request.form.get('hora_fin')
+                intervalo = request.form.get('intervalo_minutos')
                 bloqueado = True if request.form.get('bloqueado_todo_el_dia') == 'on' else False
+
+                # Conversión limpia de texto a formato hora (time) para la base de datos
+                h_inicio = datetime.strptime(hora_inicio_str, '%H:%M').time() if hora_inicio_str else None
+                h_fin = datetime.strptime(hora_fin_str, '%H:%M').time() if hora_fin_str else None
+                val_intervalo = int(intervalo) if intervalo else None
 
                 reg = DisponibilidadUni.query.filter_by(
                     id_especialista=especialista_id,
@@ -233,24 +241,24 @@ def gestionar_disponibilidad():
                 ).first()
 
                 if reg:
-                    reg.hora_inicio = hora_inicio
-                    reg.hora_fin = hora_fin
-                    reg.intervalo_minutos = int(intervalo)
+                    reg.hora_inicio = h_inicio
+                    reg.hora_fin = h_fin
+                    reg.intervalo_minutos = val_intervalo
                     reg.bloqueado_todo_el_dia = bloqueado
                 else:
                     nuevo_reg = DisponibilidadUni(
                         id_cliente=cliente_id,
                         id_especialista=especialista_id,
                         dia_semana=dia_semana,
-                        hora_inicio=hora_inicio,
-                        hora_fin=hora_fin,
-                        intervalo_minutos=int(intervalo),
+                        hora_inicio=h_inicio,
+                        hora_fin=h_fin,
+                        intervalo_minutos=val_intervalo,
                         bloqueado_todo_el_dia=bloqueado
                     )
                     db.session.add(nuevo_reg)
 
                 db.session.commit()
-                flash(f'Plantilla para {dia_semana} actualizada correctamente.', 'success')
+                flash(f'Plantilla flexible para {dia_semana} actualizada correctamente.', 'success')
 
             elif accion == 'guardar_excepcion':
                 fecha_str = request.form.get('fecha_especifica')
