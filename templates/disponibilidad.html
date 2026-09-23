@@ -1,120 +1,173 @@
 {% extends 'base.html' %}
 
-{% block title %}Declaración de Disponibilidad - Renovatia{% endblock %}
+{% block title %}Declaración de Disponibilidad{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4 px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="fw-bold text-dark mb-1">Declaración de Disponibilidad</h2>
-            <p class="text-muted small mb-0">Configura los bloques horarios semanales para la habilitación de citas</p>
-        </div>
+<div class="header-bar">
+    <div>
+        <h1 class="page-title">Declaración de Disponibilidad</h1>
+        <p class="page-subtitle">Configura los bloques horarios semanales y excepciones mensuales para la habilitación de citas</p>
     </div>
+</div>
 
-    <!-- Selector de Especialista -->
-    {% if current_user_role != 'Especialista' %}
-    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
-        <form method="GET" action="{{ url_for('agenda.gestionar_disponibilidad') }}" class="row g-3 align-items-center">
-            <div class="col-md-8">
-                <label class="form-label fw-semibold small">Seleccionar Especialista:</label>
-                <select name="id_especialista" class="form-select" onchange="this.form.submit()">
-                    <option value="">-- Seleccionar --</option>
+<div class="card-panel">
+    <form id="formDisponibilidad" action="{{ url_for('agenda.guardar_disponibilidad') }}" method="POST">
+        
+        <!-- Selector de Especialista y Mes -->
+        <div class="form-grid" style="margin-bottom: 2rem;">
+            <div class="form-group">
+                <label for="id_especialista" class="form-label">Seleccionar Especialista:</label>
+                <select id="id_especialista" name="id_especialista" class="form-select" required>
+                    <option value="">-- Seleccione --</option>
                     {% for esp in especialistas %}
-                    <option value="{{ esp.id_especialista }}" {% if especialista_activo == esp.id_especialista %}selected{% endif %}>
-                        {{ esp.nombre }} {{ esp.apellido }}
-                    </option>
+                    <option value="{{ esp.id_especialista }}">{{ esp.nombre }} {{ esp.apellido }}</option>
                     {% endfor %}
                 </select>
             </div>
-        </form>
-    </div>
-    {% endif %}
+            <div class="form-group">
+                <label for="mes_gestion" class="form-label">Mes de Gestión:</label>
+                <input type="month" id="mes_gestion" name="mes_gestion" class="form-control" required>
+            </div>
+        </div>
 
-    {% if especialista_activo or current_user_role == 'Especialista' %}
-    <div class="row g-4">
-        <!-- Formulario para agregar bloque -->
-        <div class="col-md-5">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock text-primary me-2"></i>Asignar Horario por Día</h5>
-                <form method="POST" action="{{ url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_activo) }}">
-                    <input type="hidden" name="accion" value="guardar_plantilla">
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small">Día de la Semana *</label>
-                        <select name="dia_semana" class="form-select" required>
-                            <option value="">-- Seleccionar Día --</option>
-                            <option value="Lunes">Lunes</option>
-                            <option value="Martes">Martes</option>
-                            <option value="Miércoles">Miércoles</option>
-                            <option value="Jueves">Jueves</option>
-                            <option value="Viernes">Viernes</option>
-                            <option value="Sábado">Sábado</option>
-                            <option value="Domingo">Domingo</option>
+        <!-- Sistema de Pestañas -->
+        <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 1rem;">
+            <button type="button" class="btn tab-btn active" onclick="showTab('plantilla')" style="flex: 1; background: #0d9488; color: white;">2. Plantilla Semanal</button>
+            <button type="button" class="btn tab-btn" onclick="showTab('excepciones')" style="flex: 1; background: #e5e7eb; color: #374151;">3. Excepciones por Fecha</button>
+        </div>
+
+        <!-- PESTAÑA: PLANTILLA SEMANAL -->
+        <div id="tab_plantilla" class="tab-content">
+            <div style="margin-bottom: 1rem;">
+                <button type="button" class="btn btn-outline" onclick="replicarLunes()" style="width: 100%; border-color: #0d9488; color: #0d9488;">
+                    Replicar Lunes a Toda la Semana
+                </button>
+            </div>
+
+            {% set dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
+            {% for dia in dias_semana %}
+            <div class="clinical-section" style="margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">
+                    <h3 style="margin: 0; font-size: 1.1rem;">{{ dia }}</h3>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarDia('{{ dia|lower }}')">Limpiar</button>
+                        <label style="color: #dc2626; font-weight: bold;">
+                            <input type="checkbox" name="bloquear_{{ dia|lower }}" onchange="toggleBloqueoDia('{{ dia|lower }}', this.checked)"> Bloquear día
+                        </label>
+                    </div>
+                </div>
+
+                <div id="bloques_{{ dia|lower }}">
+                    {% for turno in ['T1', 'T2', 'T3', 'T4'] %}
+                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <span style="width: 30px; color: #6b7280;">{{ turno }}</span>
+                        <input type="time" name="{{ dia|lower }}_{{ turno }}_inicio" class="form-control" style="width: 150px;">
+                        <span>a</span>
+                        <input type="time" name="{{ dia|lower }}_{{ turno }}_fin" class="form-control" style="width: 150px;">
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- PESTAÑA: EXCEPCIONES POR FECHA -->
+        <div id="tab_excepciones" class="tab-content" style="display: none;">
+            <p style="text-align: center; color: #6b7280; font-style: italic;">Selecciona el mes arriba para cargar los días específicos que requieren excepciones (viajes, feriados).</p>
+            
+            <!-- Aquí se inyectarán los días del mes vía JS o puedes usar un input date libre para agregar excepciones dinámicas -->
+            <div class="clinical-section" style="border-color: #0d9488;">
+                <div class="clinical-section-title" style="color: #0d9488;">Agregar Excepción</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Fecha Específica</label>
+                        <input type="date" name="exc_fecha[]" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bloqueo Total</label>
+                        <select name="exc_bloqueado[]" class="form-select">
+                            <option value="0">No, usar horario específico</option>
+                            <option value="1">Sí, bloquear todo el día</option>
                         </select>
                     </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Hora Inicio *</label>
-                            <input type="time" class="form-control" name="hora_inicio" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold small">Hora Fin *</label>
-                            <input type="time" class="form-control" name="hora_fin" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold small">Duración Sugerida / Intervalo (Opcional)</label>
-                        <input type="number" class="form-control" name="intervalo_minutos" placeholder="Libre o ej. 45">
-                    </div>
-                    <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 shadow-sm" style="background-color: #7c3aed; border: none;">
-                        Guardar Disponibilidad Flexible
-                    </button>
-                </form>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <input type="time" name="exc_inicio[]" class="form-control" placeholder="Inicio">
+                    <input type="time" name="exc_fin[]" class="form-control" placeholder="Fin">
+                </div>
             </div>
         </div>
 
-        <!-- Listado de Horarios Configurados -->
-        <div class="col-md-7">
-            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                <div class="card-header bg-white py-3 px-4 border-0">
-                    <h5 class="fw-bold text-dark mb-0">Horarios Declarados Activos</h5>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light text-uppercase fs-7 text-secondary">
-                            <tr>
-                                <th class="py-3 ps-4">Día</th>
-                                <th class="py-3">Horario Laboral</th>
-                                <th class="py-3">Duración Sesión</th>
-                                <th class="py-3 text-end pe-4">Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for d in disponibilidades %}
-                            <tr>
-                                <td class="ps-4 fw-bold text-dark">{{ d.dia_semana }}</td>
-                                <td>{{ d.hora_inicio.strftime('%H:%M') }} - {{ d.hora_fin.strftime('%H:%M') }}</td>
-                                <td>{{ d.intervalo_minutos }} min</td>
-                                <td class="text-end pe-4">
-                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-1 rounded-pill">Activo</span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="4" class="text-center py-4 text-muted small">
-                                    No hay horarios configurados para este especialista.
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+            <button type="submit" class="btn btn-primary" style="background: #6d28d9; padding: 1rem 2rem; font-size: 1.1rem;">
+                Guardar Configuración de Disponibilidad
+            </button>
         </div>
-    </div>
-    {% else %}
-    <div class="alert alert-info text-center p-4 rounded-4 shadow-sm">
-        Por favor seleccione un especialista para visualizar y configurar su disponibilidad horaria.
-    </div>
-    {% endif %}
+    </form>
 </div>
+
+<script>
+    // Lógica para cambiar entre pestañas
+    function showTab(tabName) {
+        document.getElementById('tab_plantilla').style.display = tabName === 'plantilla' ? 'block' : 'none';
+        document.getElementById('tab_excepciones').style.display = tabName === 'excepciones' ? 'block' : 'none';
+        
+        const btns = document.querySelectorAll('.tab-btn');
+        btns[0].style.background = tabName === 'plantilla' ? '#0d9488' : '#e5e7eb';
+        btns[0].style.color = tabName === 'plantilla' ? 'white' : '#374151';
+        btns[1].style.background = tabName === 'excepciones' ? '#0d9488' : '#e5e7eb';
+        btns[1].style.color = tabName === 'excepciones' ? 'white' : '#374151';
+    }
+
+    // Lógica para bloquear todos los inputs de un día específico
+    function toggleBloqueoDia(dia, isBlocked) {
+        const contenedor = document.getElementById('bloques_' + dia);
+        const inputs = contenedor.querySelectorAll('input[type="time"]');
+        inputs.forEach(input => {
+            input.disabled = isBlocked;
+            if (isBlocked) input.value = ''; // Limpia el valor si se bloquea
+        });
+    }
+
+    // Lógica para limpiar los inputs de un día
+    function limpiarDia(dia) {
+        const contenedor = document.getElementById('bloques_' + dia);
+        const inputs = contenedor.querySelectorAll('input[type="time"]');
+        inputs.forEach(input => input.value = '');
+        
+        const checkbox = document.querySelector(`input[name="bloquear_${dia}"]`);
+        if (checkbox) {
+            checkbox.checked = false;
+            toggleBloqueoDia(dia, false);
+        }
+    }
+
+    // Lógica estrella: Replicar Lunes a toda la semana
+    function replicarLunes() {
+        const turnos = ['T1', 'T2', 'T3', 'T4'];
+        const diasDestino = ['martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+        
+        // 1. Verificar si el lunes está bloqueado
+        const lunesBloqueado = document.querySelector('input[name="bloquear_lunes"]').checked;
+
+        diasDestino.forEach(dia => {
+            // Replicar estado de bloqueo
+            const checkboxDia = document.querySelector(`input[name="bloquear_${dia}"]`);
+            checkboxDia.checked = lunesBloqueado;
+            toggleBloqueoDia(dia, lunesBloqueado);
+
+            // Replicar tiempos
+            if (!lunesBloqueado) {
+                turnos.forEach(turno => {
+                    const inicioLunes = document.querySelector(`input[name="lunes_${turno}_inicio"]`).value;
+                    const finLunes = document.querySelector(`input[name="lunes_${turno}_fin"]`).value;
+                    
+                    document.querySelector(`input[name="${dia}_${turno}_inicio"]`).value = inicioLunes;
+                    document.querySelector(`input[name="${dia}_${turno}_fin"]`).value = finLunes;
+                });
+            }
+        });
+        alert("¡Horarios del Lunes replicados a toda la semana exitosamente!");
+    }
+</script>
 {% endblock %}
