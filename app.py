@@ -120,7 +120,7 @@ def dashboard():
         total_especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).count()
         citas = CitaUni.query.filter_by(id_cliente=cliente_id).order_by(CitaUni.fecha_hora_inicio.asc()).all()
         
-        total_historias = HistoriaClinica.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).count()
+        total_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).count()
 
     citas_programadas = sum(1 for c in citas if c.estado_cita == 'Programada')
     citas_completadas = sum(1 for c in citas if c.estado_cita == 'Completada')
