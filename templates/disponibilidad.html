@@ -37,6 +37,7 @@
             <div class="card border-0 shadow-sm rounded-4 p-4">
                 <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock text-primary me-2"></i>Asignar Horario por Día</h5>
                 <form method="POST" action="{{ url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_activo) }}">
+                    <input type="hidden" name="accion" value="guardar_plantilla">
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Día de la Semana *</label>
                         <select name="dia_semana" class="form-select" required>
