@@ -181,7 +181,7 @@ def gestionar_disponibilidad():
                     DisponibilidadUni.id_especialista == especialista_id,
                     DisponibilidadUni.dia_semana.in_(dias_semana),
                     DisponibilidadUni.fecha_especifica == None
-                .delete(synchronize_session=False)
+                ).delete(synchronize_session=False)
 
                 # Replicar cada bloque del lunes a los demás días
                 for d in dias_semana:
