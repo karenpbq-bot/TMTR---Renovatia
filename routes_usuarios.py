@@ -102,12 +102,15 @@ def nuevo_usuario():
     rol = request.form.get('rol', '').strip()
     codigo_7d_ingresado = request.form.get('codigo_7d', '').strip().upper()
     
-    # REGLA DE SEGURIDAD ABSOLUTA: Ningún usuario local puede crear un Administrador o Superadmin
-    if rol in ['Administrador', 'Superadmin']:
-        flash('⚠️ Error de seguridad: Está estrictamente prohibido registrar perfiles de Administrador o Superadmin desde este módulo.', 'danger')
+    # REGLA DE SEGURIDAD 1: Nadie puede crear un Superadmin
+    if rol == 'Superadmin':
+        flash('⚠️ Error de seguridad: Está estrictamente prohibido registrar perfiles de Superadmin.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Resto de validaciones institucionales y sincronización con Supabase...
+    # REGLA DE SEGURIDAD 2: Solo el Superadmin puede crear Administradores
+    if rol == 'Administrador' and rol_sesion != 'Superadmin':
+        flash('⚠️ Error de seguridad: Solo el Superadmin puede registrar perfiles de Administrador.', 'danger')
+        return redirect(url_for('usuarios.gestionar_usuarios'))
 
     if rol_sesion == 'Superadmin':
         id_cli = request.form.get('id_cliente')
@@ -119,7 +122,7 @@ def nuevo_usuario():
         flash('Todos los campos obligatorios, incluyendo el código de 7 dígitos, deben ser completados.', 'warning')
         return redirect(url_for('usuarios.gestionar_usuarios'))
 
-    # Validación de correspondencia del Código de 7 Dígitos
+    # Validación de correspondencia del Código de 7 Dígitos Institucional
     codigo_obj = Codigo7D.query.filter_by(codigo=codigo_7d_ingresado, id_cliente=id_cliente).first()
     
     if not codigo_obj:
@@ -153,7 +156,7 @@ def nuevo_usuario():
 
     db.session.add(nuevo)
 
-    # 2. SINCRONIZACIÓN AUTOMÁTICA CON TABLAS CLÍNICAS EN SUPABASE
+    # 2. SINCRONIZACIÓN AUTOMÁTICA CON LAS TABLAS CLÍNICAS EN SUPABASE
     if rol == 'Paciente':
         from models import PacienteUni
         partes_nombre = nombres.split(' ', 1)
@@ -168,7 +171,7 @@ def nuevo_usuario():
                 nombre=nombre_p,
                 apellido=apellido_p,
                 email=correo,
-                dni=dni if dni else f"DNI_{random.randint(100000,999999)}", # Evita error si falta DNI
+                dni=dni if dni else f"DNI_{random.randint(100000,999999)}",
                 codigo_invitacion_7d=codigo_7d_ingresado
             )
             nuevo_paciente.set_password(password if password else 'Temp2026*')
