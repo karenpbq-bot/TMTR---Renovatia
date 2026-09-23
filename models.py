@@ -137,8 +137,8 @@ class PacienteUni(db.Model):
 
     id_paciente = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
-    codigo_invitacion_7d = db.Column(db.String(7), unique=True, nullable=False, index=True, default=lambda: generar_codigo(7))
-
+    codigo_invitacion_7d = db.Column(db.String(7), unique=False, nullable=False, index=True)
+    
     # Datos Personales y Demográficos
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
