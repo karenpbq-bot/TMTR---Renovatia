@@ -317,3 +317,17 @@ def gestionar_disponibilidad():
         excepciones=excepciones,
         especialista_activo=especialista_id
     )
+
+@agenda_bp.route('/disponibilidad/eliminar/<int:id_disponibilidad>', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
+def eliminar_disponibilidad(id_disponibilidad):
+    """Permite eliminar un intervalo o bloque horario específico"""
+    bloque = DisponibilidadUni.query.get_or_404(id_disponibilidad)
+    especialista_id = bloque.id_especialista
+    
+    db.session.delete(bloque)
+    db.session.commit()
+    
+    flash('Intervalo horario eliminado correctamente.', 'success')
+    return redirect(url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_id))
