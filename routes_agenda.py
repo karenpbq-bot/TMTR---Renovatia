@@ -226,39 +226,28 @@ def gestionar_disponibilidad():
                 dia_semana = request.form.get('dia_semana')
                 hora_inicio_str = request.form.get('hora_inicio')
                 hora_fin_str = request.form.get('hora_fin')
-                intervalo = request.form.get('intervalo_minutos')
                 bloqueado = True if request.form.get('bloqueado_todo_el_dia') == 'on' else False
 
-                # Conversión limpia de texto a formato hora (time) para la base de datos
                 h_inicio = datetime.strptime(hora_inicio_str, '%H:%M').time() if hora_inicio_str else None
                 h_fin = datetime.strptime(hora_fin_str, '%H:%M').time() if hora_fin_str else None
-                val_intervalo = int(intervalo) if intervalo else None
 
-                reg = DisponibilidadUni.query.filter_by(
+                if not dia_semana or (not bloqueado and (not h_inicio or not h_fin)):
+                    flash('Debe completar el día y el rango horario del bloque.', 'warning')
+                    return redirect(url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_id))
+
+                # Crear un nuevo bloque independiente en la tabla uni_disponibilidad
+                nuevo_bloque = DisponibilidadUni(
+                    id_cliente=cliente_id,
                     id_especialista=especialista_id,
                     dia_semana=dia_semana,
-                    fecha_especifica=None
-                ).first()
-
-                if reg:
-                    reg.hora_inicio = h_inicio
-                    reg.hora_fin = h_fin
-                    reg.intervalo_minutos = val_intervalo
-                    reg.bloqueado_todo_el_dia = bloqueado
-                else:
-                    nuevo_reg = DisponibilidadUni(
-                        id_cliente=cliente_id,
-                        id_especialista=especialista_id,
-                        dia_semana=dia_semana,
-                        hora_inicio=h_inicio,
-                        hora_fin=h_fin,
-                        intervalo_minutos=val_intervalo,
-                        bloqueado_todo_el_dia=bloqueado
-                    )
-                    db.session.add(nuevo_reg)
-
+                    hora_inicio=h_inicio,
+                    hora_fin=h_fin,
+                    bloqueado_todo_el_dia=bloqueado,
+                    estado=True
+                )
+                db.session.add(nuevo_bloque)
                 db.session.commit()
-                flash(f'Plantilla flexible para {dia_semana} actualizada correctamente.', 'success')
+                flash(f'Nuevo intervalo horario agregado para el día {dia_semana}.', 'success')
 
             elif accion == 'guardar_excepcion':
                 fecha_str = request.form.get('fecha_especifica')
