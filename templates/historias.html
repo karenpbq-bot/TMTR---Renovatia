@@ -22,27 +22,39 @@
         <table class="custom-table">
             <thead>
                 <tr>
-                    <th># Historia</th>
+                    <th># Documento</th>
                     <th>Paciente</th>
-                    <th>Edad</th>
-                    <th>Teléfono</th>
-                    <th>Diagnóstico Principal</th>
-                    <th>Psicólogo Responsable</th>
+                    <th>Ocupación</th>
+                    <th>Teléfono (Paciente)</th>
+                    <th>Diagnóstico (CIE/DSM)</th>
+                    <th>Estado de Ficha</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for h in historias %}
                 <tr>
-                    <td><strong>HC-{{ "%04d"|format(h.id_historia) }}</strong></td>
+                    <td><strong>{{ h.nro_historia or '-' }}</strong></td>
                     <td>{{ h.paciente_rel.nombre }} {{ h.paciente_rel.apellido }}</td>
-                    <td>{{ h.edad or '-' }} años</td>
-                    <td>{{ h.telefono or '-' }}</td>
-                    <td>{{ h.codigo_cie11_dsm5 or 'Pendiente' }}</td>
-                    <td>{{ h.psicologo_responsable or 'Sin asignar' }}</td>
+                    <td>{{ h.ocupacion_actual or '-' }}</td>
+                    <td>{{ h.paciente_rel.telefono or 'No registrado' }}</td>
+                    <td>
+                        {% if h.diagnostico_cie10_dsm5 and h.diagnostico_cie10_dsm5.get('codigo') %}
+                            <span class="badge" style="background: #e0e7ff; color: #3730a3;">{{ h.diagnostico_cie10_dsm5.get('codigo') }}</span>
+                        {% else %}
+                            Pendiente
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if h.estado_historia %}
+                            <span style="color: #166534;"><i class="fa-solid fa-check-circle"></i> Activa</span>
+                        {% else %}
+                            <span style="color: #991b1b;"><i class="fa-solid fa-archive"></i> Archivada</span>
+                        {% endif %}
+                    </td>
                     <td>
                         <a href="{{ url_for('clinica.ver_historia', id_historia=h.id_historia) }}" class="btn btn-secondary btn-sm">
-                            <i class="fa-solid fa-eye"></i> Ver Ficha Completa
+                            <i class="fa-solid fa-eye"></i> Ver Ficha
                         </a>
                     </td>
                 </tr>
