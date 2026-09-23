@@ -5,7 +5,7 @@ from config import Config
 from models import (
     db, ClienteEmpresa, UsuarioUni, EspecialistaUni, 
     PacienteUni, DisponibilidadUni, CitaUni, 
-    HistoriaClinica, SesionEvolucion
+    HistoriaClinicaPsi, SeguimientoPsi
 )
 
 def init_db():
@@ -110,33 +110,32 @@ def sembrar_datos_ejemplo(database, cliente, peru_tz):
 
     # Crear Historia Clínica de Psicología (psi_historias_clinicas)
     if paciente and especialista:
-        historia = HistoriaClinica.query.filter_by(id_paciente=paciente.id_paciente).first()
+        historia = HistoriaClinicaPsi.query.filter_by(id_paciente=paciente.id_paciente).first()
         if not historia:
-            historia = HistoriaClinica(
+            historia = HistoriaClinicaPsi(
+                id_cliente=cliente.id_cliente,
                 id_paciente=paciente.id_paciente,
-                fecha_nacimento=date(1995, 6, 15),
-                edad=29,
-                procedencia="Arequipa, Perú",
-                grado_instruccion="Superior Completa",
-                institucion="Universidad Nacional",
-                nombres_padres="Roberto Gómez / Elena Silva",
-                telefono="+51 987654321",
+                nro_historia=paciente.dni,
+                grado_instruccion="Estudios universitarios completos",
+                ocupacion_actual="Estudiante",
+                estado_civil="Soltero(a)",
                 motivo_consulta="Manifiesta episodios repetidos de ansiedad académica y sobrecarga laboral.",
-                problema_actual="Dificultad para conciliar el sueño y palpitaciones antes de presentaciones.",
-                codigo_cie11_dsm5="CIE-11: 6B00 Trastorno de Ansiedad Generalizada",
-                psicologo_responsable=f"{especialista.nombre} {especialista.apellido}",
-                colegiatura_csp=especialista.matricula,
-                fecha_creacion=datetime.now(peru_tz)
+                sintomatologia_principal="Dificultad para conciliar el sueño y palpitaciones antes de presentaciones.",
+                diagnostico_cie10_dsm5={"codigo": "F41.1", "descripcion": "Trastorno de ansiedad generalizada"},
+                tipo_diagnostico="Presuntivo",
+                fecha_apertura=datetime.now(peru_tz)
             )
             database.session.add(historia)
             database.session.commit()
 
-            # Crear Sesión de Evolución de prueba (psi_sesiones_evolucion)
-            sesion = SesionEvolucion(
+            # Crear Sesión de Evolución de prueba (psi_seguimiento)
+            sesion = SeguimientoPsi(
                 id_historia=historia.id_historia,
+                id_especialista=especialista.id_especialista,
                 fecha_sesion=datetime.now(peru_tz) - timedelta(days=7),
-                evolucion_clinica="Primera sesión de evaluación. Se establece encuadre terapéutico.",
-                observaciones_conductuales="Paciente orientada en tiempo y espacio."
+                numero_sesion=1,
+                nota_objetiva="Paciente orientada en tiempo y espacio. Lenguaje fluido.",
+                apreciacion_clinica="Primera sesión de evaluación. Se establece encuadre terapéutico."
             )
             database.session.add(sesion)
 
