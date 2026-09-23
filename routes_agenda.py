@@ -64,29 +64,9 @@ def gestionar_citas():
     pacientes_tabla = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
     pacientes_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Paciente').all()
     
-    pacientes_dict = {}
-    for p in pacientes_tabla:
-        key = getattr(p, 'email', None) or getattr(p, 'dni', None) or p.id_paciente
-        pacientes_dict[key] = p
-    for u in pacientes_usuarios:
-        key = getattr(u, 'correo', None) or getattr(u, 'dni', None) or u.id_usuario
-        if key not in pacientes_dict:
-            pacientes_dict[key] = u
-    pacientes = list(pacientes_dict.values())
-
-    # UNIFICACIÓN TOTAL: Capturar especialistas de ambas tablas (EspecialistaUni y UsuarioUni con rol Especialista)
-    especialistas_tabla = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
-    especialistas_usuarios = UsuarioUni.query.filter_by(id_cliente=cliente_id, rol='Especialista').all()
-    
-    especialistas_dict = {}
-    for e in especialistas_tabla:
-        key = getattr(e, 'email', None) or e.id_especialista
-        especialistas_dict[key] = e
-    for u in especialistas_usuarios:
-        key = getattr(u, 'correo', None) or u.id_usuario
-        if key not in especialistas_dict:
-            especialistas_dict[key] = u
-    especialistas = list(especialistas_dict.values())
+    # Capturar pacientes y especialistas directamente de sus tablas operativas
+    pacientes = PacienteUni.query.filter_by(id_cliente=cliente_id).all()
+    especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
 
     return render_template('citas.html', citas=lista_citas, pacientes=pacientes, especialistas=especialistas)
 
