@@ -5,7 +5,7 @@ from config import Config
 from models import (
     db, get_peru_time, ClienteEmpresa, UsuarioUni, EspecialistaUni, 
     PacienteUni, DisponibilidadUni, CitaUni, ReprogramacionUni, 
-    HistoriaClinica, SesionEvolucion
+    HistoriaClinicaPsi, SeguimientoPsi
 )
 
 # 1. ÚNICA CREACIÓN DE LA INSTANCIA DE APP
