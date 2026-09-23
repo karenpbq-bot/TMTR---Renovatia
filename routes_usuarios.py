@@ -102,10 +102,12 @@ def nuevo_usuario():
     rol = request.form.get('rol', '').strip()
     codigo_7d_ingresado = request.form.get('codigo_7d', '').strip().upper()
     
-    # Restricción absoluta: Ningún rol local puede crear un Administrador
-    if rol == 'Administrador':
-        flash('La creación del rol Administrador está restringida exclusivamente al Superadmin.', 'danger')
+    # REGLA DE SEGURIDAD ABSOLUTA: Ningún usuario local puede crear un Administrador o Superadmin
+    if rol in ['Administrador', 'Superadmin']:
+        flash('⚠️ Error de seguridad: Está estrictamente prohibido registrar perfiles de Administrador o Superadmin desde este módulo.', 'danger')
         return redirect(url_for('usuarios.gestionar_usuarios'))
+
+    # Resto de validaciones institucionales y sincronización con Supabase...
 
     if rol_sesion == 'Superadmin':
         id_cli = request.form.get('id_cliente')
