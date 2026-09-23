@@ -258,53 +258,68 @@ class ReprogramacionUni(db.Model):
 # 3. TABLAS ESPECÍFICAS DE PSICOLOGÍA (Prefijo psi_)
 # ===========================================================================
 
-class HistoriaClinica(db.Model):
+class HistoriaClinicaPsi(db.Model):
+    """Historia Clínica Base del Paciente (Anamnesis)"""
     __tablename__ = 'psi_historias_clinicas'
 
     id_historia = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
     id_paciente = db.Column(db.Integer, db.ForeignKey('uni_pacientes.id_paciente'), nullable=False, unique=True)
     
-    # Ficha de Identificación
-    fecha_nacimento = db.Column(db.Date, nullable=True)
-    edad = db.Column(db.Integer, nullable=True)
-    procedencia = db.Column(db.String(100), nullable=True)
-    grado_instruccion = db.Column(db.String(100), nullable=True)
-    institucion = db.Column(db.String(150), nullable=True)
-    nombres_padres = db.Column(db.String(200), nullable=True)
-    telefono = db.Column(db.String(20), nullable=True)
+    nro_historia = db.Column(db.String(15), nullable=True)
+    grado_instruccion = db.Column(db.String(50), nullable=True)
+    ocupacion_actual = db.Column(db.String(25), nullable=True)
+    estado_civil = db.Column(db.String(20), nullable=True)
+    religion = db.Column(db.String(20), nullable=True)
+    nombre_acompanante = db.Column(db.String(25), nullable=True) 
+    parentesco_acompanante = db.Column(db.String(20), nullable=True)
+    
+    motivo_consulta = db.Column(db.String(150), nullable=True)
+    tiempo_enfermedad = db.Column(db.String(25), nullable=True)
+    sintomatologia_principal = db.Column(db.String(150), nullable=True)
+    
+    antecedentes_personales_psicologicos = db.Column(db.String(150), nullable=True)
+    antecedentes_medicos_relevantes = db.Column(db.String(150), nullable=True)
+    antecedentes_familiares = db.Column(db.String(150), nullable=True)
+    historia_desarrollo_social = db.Column(db.String(150), nullable=True)
+    
+    examen_mental_estado_actual = db.Column(db.JSON, nullable=True)
+    diagnostico_cie10_dsm5 = db.Column(db.JSON, nullable=True)
+    tipo_diagnostico = db.Column(db.String(20), nullable=True)
+    
+    objetivos_terapeuticos = db.Column(db.String(150), nullable=True)
+    tipo_intervencion = db.Column(db.String(30), nullable=True)
+    pronostico = db.Column(db.String(20), nullable=True)
+    
+    fecha_apertura = db.Column(db.DateTime(timezone=True), default=get_peru_time)
+    estado_historia = db.Column(db.Boolean, default=True)
 
-    # Antecedentes y Clínica
-    motivo_consulta = db.Column(db.Text, nullable=True)
-    problema_actual = db.Column(db.Text, nullable=True)
-    historia_desarrollo = db.Column(db.Text, nullable=True)
-    historia_escolar_social = db.Column(db.Text, nullable=True)
-    dinamica_familiar = db.Column(db.Text, nullable=True)
-    codigo_cie11_dsm5 = db.Column(db.Text, nullable=True)
-
-    # Plan de Intervención
-    objetivos_menor = db.Column(db.Text, nullable=True)
-    objetivos_padres = db.Column(db.Text, nullable=True)
-    coordinacion_externa = db.Column(db.Text, nullable=True)
-
-    # Psicólogo Responsable
-    psicologo_responsable = db.Column(db.String(150), nullable=True)
-    colegiatura_csp = db.Column(db.String(50), nullable=True)
-    fecha_creacion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
-
-    sesiones_evolucion = db.relationship('SesionEvolucion', backref='historia_clinica', cascade='all, delete-orphan')
-
-    def __repr__(self):
-        return f"<HistoriaClinica #{self.id_historia} PacienteID:{self.id_paciente}>"
+    seguimientos = db.relationship('SeguimientoPsi', backref='historia_clinica', cascade='all, delete-orphan')
 
 
-class SesionEvolucion(db.Model):
-    __tablename__ = 'psi_sesiones_evolucion'
+class SeguimientoPsi(db.Model):
+    """Notas de evolución clínica bajo formato SOAP"""
+    __tablename__ = 'psi_seguimiento'
 
-    id_sesion = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    id_historia = db.Column(db.Integer, db.ForeignKey('psi_historias_clinicas.id_historia'), nullable=False) 
+    id_seguimiento = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_historia = db.Column(db.Integer, db.ForeignKey('psi_historias_clinicas.id_historia'), nullable=False)
+    id_cita = db.Column(db.Integer, db.ForeignKey('uni_citas.id_cita'), nullable=True)
+    id_especialista = db.Column(db.Integer, db.ForeignKey('uni_especialistas.id_especialista'), nullable=False)
+    
+    numero_sesion = db.Column(db.Integer, nullable=True)
     fecha_sesion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
-    evolucion_clinica = db.Column(db.Text, nullable=False)
-    observaciones_conductuales = db.Column(db.Text, nullable=True)
+    
+    nota_subjetiva = db.Column(db.String(150), nullable=True)
+    nota_objetiva = db.Column(db.String(150), nullable=True)
+    apreciacion_clinica = db.Column(db.String(150), nullable=True)
+    plan_tareas = db.Column(db.String(150), nullable=True)
+    
+    pruebas_aplicadas = db.Column(db.String(150), nullable=True)
+    evaluacion_riesgo = db.Column(db.String(25), nullable=True)
+    proxima_cita_recomendada = db.Column(db.Date, nullable=True)
+    
+    firma_digital_cerrada = db.Column(db.Boolean, default=False)
+    creado_en = db.Column(db.DateTime(timezone=True), default=get_peru_time)
 
 class Codigo7D(db.Model):
     """Códigos de invitación de 7 dígitos generados por el Administrador"""
