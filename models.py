@@ -161,7 +161,7 @@ class PacienteUni(db.Model):
     creado_en = db.Column(db.DateTime(timezone=True), default=get_peru_time)
 
     # Relaciones
-    historias_clinicas = db.relationship('HistoriaClinica', backref='paciente_rel', lazy=True, cascade="all, delete-orphan")
+    historias_clinicas = db.relationship('HistoriaClinicaPsi', backref='paciente_rel', lazy=True, cascade="all, delete-orphan")
     citas = db.relationship('CitaUni', backref='paciente', lazy=True, cascade="all, delete-orphan")
 
     def set_password(self, password):
