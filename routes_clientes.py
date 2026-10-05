@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, ClienteEmpresa, ModuloSistema, ClienteModulo  # Asegúrate de importar tus modelos o tablas asociadas
+from models import db, ClienteEmpresa
 from functools import wraps
 from datetime import datetime
 
@@ -37,14 +37,11 @@ def gestionar_clientes():
         telefono = request.form.get('telefono', '').strip()
         correo_contacto = request.form.get('correo_contacto', '').strip()
         
-        # Datos del plan
+        # Nuevos campos de suscripción, plan y pagos
         tipo_plan = request.form.get('tipo_plan', '').strip()
         costo_plan = request.form.get('costo_plan')
         vigencia_plan = request.form.get('vigencia_plan')
         modo_pago = request.form.get('modo_pago', '').strip()
-
-        # Módulos seleccionados por checkbox
-        modulos_seleccionados = request.form.getlist('modulos')
 
         if not nombre_marca:
             flash('El nombre de la marca o clínica es obligatorio.', 'warning')
@@ -64,27 +61,16 @@ def gestionar_clientes():
             )
             db.session.add(nuevo_cliente)
             db.session.commit()
-
-            # Guardar los módulos contratados en uni_clientes_modulos
-            for cod_mod in modulos_seleccionados:
-                nuevo_mod = ClienteModulo(id_cliente=nuevo_cliente.id_cliente, codigo_modulo=cod_mod)
-                db.session.add(nuevo_mod)
-            db.session.commit()
-
-            flash(f'Empresa cliente "{nombre_marca}" registrada exitosamente con sus módulos.', 'success')
+            flash(f'Empresa cliente "{nombre_marca}" registrada exitosamente con su plan y tarifa.', 'success')
         
         return redirect(url_for('clientes.gestionar_clientes'))
 
     clientes = ClienteEmpresa.query.order_by(ClienteEmpresa.id_cliente.desc()).all()
-    modulos_disponibles = ModuloSistema.query.all()
     
-    # Mapear los módulos activos de cada cliente para pasarlos a la vista
-    for c in clientes:
-        c.modulos_activos = [m.codigo_modulo for m in ClienteModulo.query.filter_by(id_cliente=c.id_cliente).all()]
-
+    # Definimos la fecha actual para que funcionen las alertas de colores en la vista
     hoy = datetime.today().date()
     
-    return render_template('clientes.html', clientes=clientes, modulos_disponibles=modulos_disponibles, hoy=hoy)
+    return render_template('clientes.html', clientes=clientes, hoy=hoy)
 
 @clientes_bp.route('/clientes/editar/<int:id_cliente>', methods=['POST'])
 @login_required
@@ -100,6 +86,7 @@ def editar_cliente(id_cliente):
     cliente.correo_contacto = request.form.get('correo_contacto', '').strip()
     cliente.estado_suscripcion = request.form.get('estado_suscripcion', 'Activo')
 
+    # Actualización de plan, tarifa, vigencia y modo de pago
     cliente.tipo_plan = request.form.get('tipo_plan', '').strip() or None
     
     costo_str = request.form.get('costo_plan')
@@ -110,21 +97,15 @@ def editar_cliente(id_cliente):
 
     cliente.modo_pago = request.form.get('modo_pago', '').strip() or None
 
-    # Actualizar módulos: Borramos los anteriores y reinsertamos los seleccionados
-    modulos_seleccionados = request.form.getlist('modulos')
-    ClienteModulo.query.filter_by(id_cliente=id_cliente).delete()
-    for cod_mod in modulos_seleccionados:
-        nuevo_mod = ClienteModulo(id_cliente=id_cliente, codigo_modulo=cod_mod)
-        db.session.add(nuevo_mod)
-
     db.session.commit()
-    flash(f'Datos y módulos de la empresa "{cliente.nombre_marca}" actualizados correctamente.', 'success')
+    flash(f'Datos de la empresa "{cliente.nombre_marca}" (incluyendo plan y tarifa) actualizados correctamente.', 'success')
     return redirect(url_for('clientes.gestionar_clientes'))
 
 @clientes_bp.route('/clientes/acciones-masivas', methods=['POST'])
 @login_required
 @role_required('Superadmin')
 def acciones_masivas():
+    """Actualiza de forma masiva el estado o la vigencia de las empresas seleccionadas"""
     ids_seleccionados = request.form.getlist('ids_clientes')
     nuevo_estado = request.form.get('nuevo_estado')
     nueva_vigencia = request.form.get('nueva_vigencia')
