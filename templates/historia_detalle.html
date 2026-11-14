@@ -26,20 +26,22 @@
         <i class="fa-solid fa-id-card"></i> 1. Ficha de Identificación
     </h2>
     <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-        <div><strong>Fecha Nacimiento:</strong> {{ historia.fecha_nacimento.strftime('%d/%m/%Y') if historia.fecha_nacimento else 'N/A' }}</div>
-        <div><strong>Edad:</strong> {{ historia.edad or 'N/A' }} años</div>
-        <div><strong>Procedencia:</strong> {{ historia.procedencia or 'N/A' }}</div>
+        <div><strong>Nro. de Historia:</strong> {{ historia.nro_historia or 'N/A' }}</div>
+        <div><strong>Fecha Nacimiento:</strong> {{ historia.paciente_rel.fecha_nac.strftime('%d/%m/%Y') if historia.paciente_rel.fecha_nac else 'N/A' }}</div>
+        <div><strong>Teléfono:</strong> {{ historia.paciente_rel.telefono or 'N/A' }}</div>
         <div><strong>Grado Instrucción:</strong> {{ historia.grado_instruccion or 'N/A' }}</div>
-        <div><strong>Institución:</strong> {{ historia.institucion or 'N/A' }}</div>
-        <div><strong>Nombres de los Padres:</strong> {{ historia.nombres_padres or 'N/A' }}</div>
-        <div><strong>Teléfono:</strong> {{ historia.telefono or 'N/A' }}</div>
+        <div><strong>Ocupación Actual:</strong> {{ historia.ocupacion_actual or 'N/A' }}</div>
+        <div><strong>Estado Civil:</strong> {{ historia.estado_civil or 'N/A' }}</div>
+        <div><strong>Religión:</strong> {{ historia.religion or 'N/A' }}</div>
+        <div><strong>Acompañante:</strong> {{ historia.nombre_acompanante or 'N/A' }}</div>
+        <div><strong>Parentesco:</strong> {{ historia.parentesco_acompanante or 'N/A' }}</div>
     </div>
 </div>
 
-<!-- Antecedentes -->
+<!-- Antecedentes y Motivo -->
 <div class="card-panel">
     <h2 class="card-title" style="margin-bottom: 1rem; color: var(--primary);">
-        <i class="fa-solid fa-clipboard-list"></i> 2. Antecedentes
+        <i class="fa-solid fa-clipboard-list"></i> 2. Antecedentes y Motivo
     </h2>
     <div style="display: flex; flex-direction: column; gap: 1rem;">
         <div>
@@ -47,20 +49,28 @@
             <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.motivo_consulta or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Problema Actual:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.problema_actual or 'Sin información' }}</p>
+            <strong>Tiempo de Enfermedad:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.tiempo_enfermedad or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Historia de Desarrollo:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.historia_desarrollo or 'Sin información' }}</p>
+            <strong>Sintomatología Principal:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.sintomatologia_principal or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Historia Escolar y Social:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.historia_escolar_social or 'Sin información' }}</p>
+            <strong>Historia de Desarrollo Social:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.historia_desarrollo_social or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Dinámica Familiar:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.dinamica_familiar or 'Sin información' }}</p>
+            <strong>Antecedentes Médicos Relevantes:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.antecedentes_medicos_relevantes or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Antecedentes Personales Psicológicos:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.antecedentes_personales_psicologicos or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Antecedentes Familiares:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.antecedentes_familiares or 'Sin información' }}</p>
         </div>
     </div>
 </div>
@@ -68,26 +78,35 @@
 <!-- Diagnóstico y Plan de Intervención -->
 <div class="card-panel">
     <h2 class="card-title" style="margin-bottom: 1rem; color: var(--primary);">
-        <i class="fa-solid fa-stethoscope"></i> 3. Diagnóstico y Plan de Intervención
+        <i class="fa-solid fa-stethoscope"></i> 3. Examen Mental, Diagnóstico y Plan
     </h2>
     <div style="display: flex; flex-direction: column; gap: 1rem;">
         <div>
-            <strong>Diagnóstico (CIE-11 / DSM-5):</strong>
+            <strong>Examen Mental / Estado Actual:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.examen_mental_estado_actual.get('descripcion', '') if historia.examen_mental_estado_actual else 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Diagnóstico (CIE-10 / DSM-5):</strong>
             <div style="background: #e0e7ff; color: #3730a3; padding: 0.75rem 1rem; border-radius: var(--radius-md); font-weight: 600; margin-top: 0.35rem;">
-                {{ historia.codigo_cie11_dsm5 or 'Diagnóstico no asignado' }}
+                {{ historia.diagnostico_cie10_dsm5.get('codigo', '') if historia.diagnostico_cie10_dsm5 else 'Sin Código' }} - 
+                {{ historia.diagnostico_cie10_dsm5.get('descripcion', 'Diagnóstico no asignado') if historia.diagnostico_cie10_dsm5 else 'Diagnóstico no asignado' }}
             </div>
         </div>
         <div>
-            <strong>Objetivos del Menor / Paciente:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.objetivos_menor or 'Sin información' }}</p>
+            <strong>Tipo de Diagnóstico:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.tipo_diagnostico or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Objetivos de los Padres / Familia:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.objetivos_padres or 'Sin información' }}</p>
+            <strong>Objetivos Terapéuticos:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.objetivos_terapeuticos or 'Sin información' }}</p>
         </div>
         <div>
-            <strong>Coordinación Externa:</strong>
-            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.coordinacion_externa or 'Sin información' }}</p>
+            <strong>Tipo de Intervención:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.tipo_intervencion or 'Sin información' }}</p>
+        </div>
+        <div>
+            <strong>Pronóstico:</strong>
+            <p style="margin-top: 0.25rem; color: var(--text-secondary);">{{ historia.pronostico or 'Sin información' }}</p>
         </div>
     </div>
 </div>
@@ -108,7 +127,7 @@
 <div class="card-panel">
     <div class="card-header">
         <h2 class="card-title">
-            <i class="fa-solid fa-notes-medical"></i> Sesiones de Evolución Clínica ({{ historia.sesiones_evolucion|length }})
+            <i class="fa-solid fa-notes-medical"></i> Sesiones de Evolución Clínica ({{ historia.seguimientos|length }})
         </h2>
         {% if current_user_role in ['Administrador', 'Especialista'] %}
         <button type="button" class="btn btn-primary btn-sm" onclick="toggleModal('modalNuevaSesionDetalle')">
@@ -157,7 +176,7 @@
     <div class="card-panel" style="width: 100%; max-width: 600px; margin: 0;">
         <div class="card-header">
             <h2 class="card-title">Registrar Evolución de Sesión</h2>
-            <button onclick="toggleModal('modalNuevaSesionDetalle')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+            <button type="button" onclick="toggleModal('modalNuevaSesionDetalle')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
         </div>
         <form action="{{ url_for('clinica.guardar_sesion_desde_historia', id_historia=historia.id_historia) }}" method="POST">
             <input type="hidden" name="id_historia" value="{{ historia.id_historia }}">
@@ -200,6 +219,10 @@
             <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">1. Datos Demográficos Básicos</h3>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
+                    <label class="form-label">Nro. de Historia</label>
+                    <input type="text" name="nro_historia" class="form-control" value="{{ historia.nro_historia or '' }}">
+                </div>
+                <div class="form-group">
                     <label class="form-label">Grado de Instrucción</label>
                     <input type="text" name="grado_instruccion" class="form-control" value="{{ historia.grado_instruccion or '' }}">
                 </div>
@@ -219,7 +242,7 @@
                     <label class="form-label">Nombre del Acompañante</label>
                     <input type="text" name="nombre_acompanante" class="form-control" value="{{ historia.nombre_acompanante or '' }}">
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="grid-column: 1 / -1;">
                     <label class="form-label">Parentesco del Acompañante</label>
                     <input type="text" name="parentesco_acompanante" class="form-control" value="{{ historia.parentesco_acompanante or '' }}">
                 </div>
@@ -256,6 +279,10 @@
             </div>
 
             <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">3. Diagnóstico y Plan</h3>
+            <div class="form-group mb-3">
+                <label class="form-label">Examen Mental / Estado Actual</label>
+                <textarea name="examen_mental_estado_actual" class="form-control" rows="2">{{ historia.examen_mental_estado_actual.get('descripcion', '') if historia.examen_mental_estado_actual else '' }}</textarea>
+            </div>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label">Código (CIE-10 / DSM-5)</label>
