@@ -102,6 +102,39 @@ def ver_historia(id_historia):
     historia = HistoriaClinicaPsi.query.get_or_404(id_historia)
     return render_template('historia_detalle.html', historia=historia)
 
+@clinica_bp.route('/historias/<int:id_historia>/editar', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
+def editar_historia(id_historia):
+    """Permite actualizar los datos demográficos y antecedentes de la historia clínica."""
+    historia = HistoriaClinicaPsi.query.get_or_404(id_historia)
+    
+    # 1. Actualizar datos básicos
+    historia.grado_instruccion = request.form.get('grado_instruccion')
+    historia.ocupacion_actual = request.form.get('ocupacion_actual')
+    
+    # 2. Actualizar antecedentes
+    historia.motivo_consulta = request.form.get('motivo_consulta')
+    historia.historia_desarrollo_social = request.form.get('historia_desarrollo_social')
+    historia.antecedentes_medicos_relevantes = request.form.get('antecedentes_medicos_relevantes')
+    
+    # 3. Estructurar y actualizar los campos JSON (Diagnóstico)
+    codigo_diag = request.form.get('codigo_diagnostico')
+    desc_diag = request.form.get('descripcion_diagnostico')
+    
+    if codigo_diag or desc_diag:
+        json_diagnostico = {
+            "codigo": codigo_diag,
+            "descripcion": desc_diag
+        }
+        historia.diagnostico_cie10_dsm5 = json_diagnostico
+
+    # Guardar en base de datos
+    db.session.commit()
+    flash('La Historia Clínica ha sido actualizada exitosamente.', 'success')
+    
+    return redirect(url_for('clinica.ver_historia', id_historia=historia.id_historia))
+
 @clinica_bp.route('/historias/<int:id_historia>/sesion/nueva', methods=['POST'])
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
@@ -191,7 +224,6 @@ def listar_sesiones():
         lista_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).all()
 
     return render_template('sesiones.html', sesiones=lista_sesiones, historias=lista_historias)
-
 
 @clinica_bp.route('/citas/<int:id_cita>/atender', methods=['POST'])
 @login_required
