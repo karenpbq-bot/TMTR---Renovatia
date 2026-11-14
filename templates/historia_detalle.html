@@ -3,15 +3,21 @@
 {% block title %}Historia Clínica HC-{{ "%04d"|format(historia.id_historia) }} - Consultorio Psicológico{% endblock %}
 
 {% block content %}
-<div class="header-bar">
+<div class="header-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
     <div>
         <h1 class="page-title">Historia Clínica HC-{{ "%04d"|format(historia.id_historia) }}</h1>
         <p class="page-subtitle">Paciente: <strong>{{ historia.paciente_rel.nombre }} {{ historia.paciente_rel.apellido }}</strong> ({{ historia.paciente_rel.email }})</p>
     </div>
-    <a href="{{ url_for('clinica.listar_historias') }}" class="btn btn-secondary">
-        <i class="fa-solid fa-arrow-left"></i>
-        <span>Volver a la lista</span>
-    </a>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if current_user_role in ['Administrador', 'Especialista', 'Director'] %}
+        <button class="btn btn-primary" onclick="toggleModal('modalEditarHistoria')">
+            <i class="fa-solid fa-pen-to-square"></i> Editar Ficha
+        </button>
+        {% endif %}
+        <a href="{{ url_for('clinica.listar_historias') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Volver a la lista
+        </a>
+    </div>
 </div>
 
 <!-- Ficha de Identificación -->
@@ -154,7 +160,6 @@
             <button onclick="toggleModal('modalNuevaSesionDetalle')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
         </div>
         <form action="{{ url_for('clinica.guardar_sesion_desde_historia', id_historia=historia.id_historia) }}" method="POST">
-            <!-- Campo oculto con el ID de la historia actual -->
             <input type="hidden" name="id_historia" value="{{ historia.id_historia }}">
             
             <div class="form-group mb-3">
@@ -175,6 +180,64 @@
             <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
                 <button type="button" class="btn btn-secondary" onclick="toggleModal('modalNuevaSesionDetalle')">Cancelar</button>
                 <button type="submit" class="btn btn-primary">Guardar Evolución</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal Editar Historia Clínica -->
+{% if current_user_role in ['Administrador', 'Especialista', 'Director'] %}
+<div id="modalEditarHistoria" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="card-panel" style="width: 100%; max-width: 800px; max-height: 90vh; overflow-y: auto; margin: 0;">
+        <div class="card-header" style="position: sticky; top: 0; background: white; z-index: 10; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
+            <h2 class="card-title">Editar Datos de Historia Clínica</h2>
+            <button type="button" onclick="toggleModal('modalEditarHistoria')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">&times;</button>
+        </div>
+        
+        <form action="{{ url_for('clinica.editar_historia', id_historia=historia.id_historia) }}" method="POST" style="padding-top: 1rem;">
+            
+            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">1. Datos Demográficos Básicos</h3>
+            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Grado de Instrucción</label>
+                    <input type="text" name="grado_instruccion" class="form-control" value="{{ historia.grado_instruccion or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Ocupación Actual</label>
+                    <input type="text" name="ocupacion_actual" class="form-control" value="{{ historia.ocupacion_actual or '' }}">
+                </div>
+            </div>
+
+            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">2. Antecedentes y Motivo</h3>
+            <div class="form-group mb-3">
+                <label class="form-label">Motivo de Consulta</label>
+                <textarea name="motivo_consulta" class="form-control" rows="2">{{ historia.motivo_consulta or '' }}</textarea>
+            </div>
+            <div class="form-group mb-3">
+                <label class="form-label">Historia de Desarrollo Social</label>
+                <textarea name="historia_desarrollo_social" class="form-control" rows="2">{{ historia.historia_desarrollo_social or '' }}</textarea>
+            </div>
+            <div class="form-group mb-3">
+                <label class="form-label">Antecedentes Médicos / Psicológicos</label>
+                <textarea name="antecedentes_medicos_relevantes" class="form-control" rows="2">{{ historia.antecedentes_medicos_relevantes or '' }}</textarea>
+            </div>
+
+            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">3. Diagnóstico</h3>
+            <div class="form-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group">
+                    <label class="form-label">Código (CIE-10 / DSM-5)</label>
+                    <input type="text" name="codigo_diagnostico" class="form-control" value="{{ historia.diagnostico_cie10_dsm5.get('codigo', '') if historia.diagnostico_cie10_dsm5 else '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción del Diagnóstico</label>
+                    <input type="text" name="descripcion_diagnostico" class="form-control" value="{{ historia.diagnostico_cie10_dsm5.get('descripcion', '') if historia.diagnostico_cie10_dsm5 else '' }}">
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem; position: sticky; bottom: 0; background: white; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <button type="button" class="btn btn-secondary" onclick="toggleModal('modalEditarHistoria')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
             </div>
         </form>
     </div>
