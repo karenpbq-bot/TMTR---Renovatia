@@ -119,8 +119,8 @@ def listar_sesiones():
         nueva_sesion = SeguimientoPsi(
             id_historia=id_historia,
             id_especialista=user_id,
-            evolucion_clinica=evolucion,
-            observaciones_conductuales=observaciones
+            nota_subjetiva=evolucion,      # Adaptado al modelo SeguimientoPsi
+            nota_objetiva=observaciones    # Adaptado al modelo SeguimientoPsi
         )
         db.session.add(nueva_sesion)
         db.session.commit()
