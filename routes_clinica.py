@@ -112,13 +112,21 @@ def editar_historia(id_historia):
     # 1. Actualizar datos básicos
     historia.grado_instruccion = request.form.get('grado_instruccion')
     historia.ocupacion_actual = request.form.get('ocupacion_actual')
+    historia.estado_civil = request.form.get('estado_civil')
+    historia.religion = request.form.get('religion')
+    historia.nombre_acompanante = request.form.get('nombre_acompanante')
+    historia.parentesco_acompanante = request.form.get('parentesco_acompanante')
     
-    # 2. Actualizar antecedentes
+    # 2. Actualizar antecedentes y motivo
     historia.motivo_consulta = request.form.get('motivo_consulta')
+    historia.tiempo_enfermedad = request.form.get('tiempo_enfermedad')
+    historia.sintomatologia_principal = request.form.get('sintomatologia_principal')
     historia.historia_desarrollo_social = request.form.get('historia_desarrollo_social')
     historia.antecedentes_medicos_relevantes = request.form.get('antecedentes_medicos_relevantes')
+    historia.antecedentes_personales_psicologicos = request.form.get('antecedentes_personales_psicologicos')
+    historia.antecedentes_familiares = request.form.get('antecedentes_familiares')
     
-    # 3. Estructurar y actualizar los campos JSON (Diagnóstico)
+    # 3. Estructurar y actualizar los campos JSON y plan (Diagnóstico)
     codigo_diag = request.form.get('codigo_diagnostico')
     desc_diag = request.form.get('descripcion_diagnostico')
     
@@ -128,6 +136,11 @@ def editar_historia(id_historia):
             "descripcion": desc_diag
         }
         historia.diagnostico_cie10_dsm5 = json_diagnostico
+
+    historia.tipo_diagnostico = request.form.get('tipo_diagnostico')
+    historia.objetivos_terapeuticos = request.form.get('objetivos_terapeuticos')
+    historia.tipo_intervencion = request.form.get('tipo_intervencion')
+    historia.pronostico = request.form.get('pronostico')
 
     # Guardar en base de datos
     db.session.commit()
