@@ -443,3 +443,50 @@ def eliminar_cita(id_cita):
         flash(f'Error al intentar eliminar la cita: {str(e)}', 'danger')
 
     return redirect(url_for('agenda.gestionar_citas'))
+
+@agenda_bp.route('/citas/<int:id_cita>/editar', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador', 'Recepcionista', 'Especialista')
+def editar_cita(id_cita):
+    """Permite editar los datos de una cita existente (paciente, especialista, fecha o motivo)."""
+    cita = CitaUni.query.get_or_404(id_cita)
+    
+    id_paciente = request.form.get('id_paciente')
+    id_especialista = request.form.get('id_especialista')
+    fecha_hora_str = request.form.get('fecha_hora_inicio')
+    motivo = request.form.get('motivo_reserva', '')
+
+    try:
+        nueva_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
+        # Mantenemos el tiempo estándar de 45 min
+        nueva_fin = nueva_inicio + timedelta(minutes=45)
+
+        # Si se cambió la hora o el especialista, validamos que no haya choque con otra cita
+        if (nueva_inicio != cita.fecha_hora_inicio) or (int(id_especialista) != cita.id_especialista):
+            solapada = CitaUni.query.filter(
+                CitaUni.id_especialista == int(id_especialista),
+                CitaUni.estado_cita.in_(['Programada', 'Confirmada']),
+                CitaUni.fecha_hora_inicio < nueva_fin,
+                CitaUni.fecha_hora_fin > nueva_inicio,
+                CitaUni.id_cita != id_cita  # Ignorar la cita actual que estamos editando
+            ).first()
+
+            if solapada:
+                flash('⚠️ Conflicto de horario: El especialista ya cuenta con otra cita activa en esa hora.', 'danger')
+                return redirect(url_for('agenda.gestionar_citas'))
+
+        # Aplicar la edición a la base de datos
+        cita.id_paciente = int(id_paciente)
+        cita.id_especialista = int(id_especialista)
+        cita.fecha_hora_inicio = nueva_inicio
+        cita.fecha_hora_fin = nueva_fin
+        cita.motivo_reserva = motivo
+
+        db.session.commit()
+        flash(f'La Cita #{id_cita} fue actualizada exitosamente.', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar la cita: {str(e)}', 'danger')
+
+    return redirect(url_for('agenda.gestionar_citas'))
