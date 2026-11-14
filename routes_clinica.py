@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import db, get_peru_time, HistoriaClinicaPsi, SeguimientoPsi, PacienteUni, CitaUni
+from models import db, get_peru_time, HistoriaClinicaPsi, SeguimientoPsi, PacienteUni, CitaUni, EspecialistaUni
 from routes_auth import login_required, role_required
 from datetime import datetime
 
@@ -17,12 +17,18 @@ def listar_historias():
     if rol == 'Superadmin':
         lista_historias = HistoriaClinicaPsi.query.all()
     elif rol == 'Especialista':
-        # El especialista solo ve las historias de los pacientes con los que tiene citas agendadas o atendidas
-        subquery_pacientes_esp = db.session.query(CitaUni.id_paciente).filter(CitaUni.id_especialista == user_id).subquery()
-        lista_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(
-            PacienteUni.id_cliente == cliente_id,
-            HistoriaClinicaPsi.id_paciente.in_(subquery_pacientes_esp)
-        ).all()
+        # CORRECCIÓN: Buscar el id_especialista vinculado a este id_usuario
+        especialista = EspecialistaUni.query.filter_by(id_usuario=user_id).first()
+        
+        if especialista:
+            # Ahora filtramos por especialista.id_especialista, NO por user_id
+            subquery_pacientes_esp = db.session.query(CitaUni.id_paciente).filter(CitaUni.id_especialista == especialista.id_especialista).subquery()
+            lista_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(
+                PacienteUni.id_cliente == cliente_id,
+                HistoriaClinicaPsi.id_paciente.in_(subquery_pacientes_esp)
+            ).all()
+        else:
+            lista_historias = [] # Si por algún error no tiene perfil de especialista, no ve nada
     else:
         # Administradores, Directores y Recepcionistas ven todas las de la empresa cliente
         lista_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(PacienteUni.id_cliente == cliente_id).all()
@@ -105,15 +111,22 @@ def guardar_sesion_desde_historia(id_historia):
     evolucion = request.form.get('evolucion_clinica')
     observaciones = request.form.get('observaciones_conductuales')
 
+    # BUSCAMOS EL ID REAL DEL ESPECIALISTA
+    especialista = EspecialistaUni.query.filter_by(id_usuario=user_id).first()
+
     if not evolucion:
         flash('Debe redactar la evolución clínica.', 'warning')
+        return redirect(url_for('clinica.ver_historia', id_historia=id_historia))
+        
+    if not especialista:
+        flash('Error: Su perfil no está configurado como especialista.', 'danger')
         return redirect(url_for('clinica.ver_historia', id_historia=id_historia))
 
     nueva_sesion = SeguimientoPsi(
         id_historia=id_historia,
-        id_especialista=user_id,
-        nota_subjetiva=evolucion,      # Adaptado al modelo SeguimientoPsi
-        nota_objetiva=observaciones    # Adaptado al modelo SeguimientoPsi
+        id_especialista=especialista.id_especialista, # <--- ID CORRECTO
+        nota_subjetiva=evolucion,      
+        nota_objetiva=observaciones    
     )
     db.session.add(nueva_sesion)
     db.session.commit()
@@ -125,42 +138,49 @@ def guardar_sesion_desde_historia(id_historia):
 @login_required
 @role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
 def listar_sesiones():
-    """Muestra el listado de sesiones de evolución, provee las historias para el modal y registra nuevas notas"""
+    """Muestra el listado de sesiones de evolución y registra nuevas notas"""
     cliente_id = session.get('id_cliente')
     rol = session.get('user_role')
     user_id = session.get('user_id')
+    
+    # BUSCAMOS EL ID REAL DEL ESPECIALISTA (si es que el usuario tiene perfil de especialista)
+    especialista = EspecialistaUni.query.filter_by(id_usuario=user_id).first()
 
-    # Si el formulario envía los datos por POST (Guardar Evolución)
+    # --- 1. Lógica POST (Guardar Evolución) ---
     if request.method == 'POST':
         id_historia = request.form.get('id_historia')
         evolucion = request.form.get('evolucion_clinica')
         observaciones = request.form.get('observaciones_conductuales')
 
         if not id_historia or not evolucion:
-            flash('Debe seleccionar una historia clínica y redactar la evolución.', 'warning')
+            flash('Debe seleccionar una historia y redactar la evolución.', 'warning')
+            return redirect(url_for('clinica.listar_sesiones'))
+            
+        if not especialista:
+            flash('Solo los usuarios con perfil de Especialista pueden firmar sesiones.', 'danger')
             return redirect(url_for('clinica.listar_sesiones'))
 
         nueva_sesion = SeguimientoPsi(
             id_historia=id_historia,
-            id_especialista=user_id,
-            nota_subjetiva=evolucion,      # Adaptado al modelo SeguimientoPsi
-            nota_objetiva=observaciones    # Adaptado al modelo SeguimientoPsi
+            id_especialista=especialista.id_especialista, # <--- AQUÍ SE USA EL ID CORRECTO
+            nota_subjetiva=evolucion,
+            nota_objetiva=observaciones
         )
         db.session.add(nueva_sesion)
         db.session.commit()
         flash('Sesión de evolución registrada exitosamente.', 'success')
         return redirect(url_for('clinica.listar_sesiones'))
     
-    # Lógica GET para listar según el rol
+    # --- 2. Lógica GET (Listar según el rol) ---
     if rol == 'Superadmin':
         lista_sesiones = SeguimientoPsi.query.all()
         lista_historias = HistoriaClinicaPsi.query.all()
-    elif rol == 'Especialista':
-        subquery_pacientes_esp = db.session.query(CitaUni.id_paciente).filter(CitaUni.id_especialista == user_id).subquery()
+    elif rol == 'Especialista' and especialista:
+        # AQUÍ SE FILTRA USANDO EL ID CORRECTO
+        subquery_pacientes_esp = db.session.query(CitaUni.id_paciente).filter(CitaUni.id_especialista == especialista.id_especialista).subquery()
         lista_sesiones = SeguimientoPsi.query.join(HistoriaClinicaPsi).join(PacienteUni).filter(
             PacienteUni.id_cliente == cliente_id
         ).all()
-        # Historias clínicas de los pacientes atendidos o agendados por este especialista
         lista_historias = HistoriaClinicaPsi.query.join(PacienteUni).filter(
             PacienteUni.id_cliente == cliente_id,
             HistoriaClinicaPsi.id_paciente.in_(subquery_pacientes_esp)
@@ -185,10 +205,14 @@ def atender_cita(id_cita):
         flash('El paciente no tiene una historia clínica aperturada. Por favor aperture la historia primero.', 'warning')
         return redirect(url_for('clinica.crear_historia'))
 
+    # Buscamos al especialista real
+    especialista = EspecialistaUni.query.filter_by(id_usuario=session.get('user_id')).first()
+    id_esp_real = especialista.id_especialista if especialista else None
+
     nueva_sesion = SeguimientoPsi(
         id_historia=historia.id_historia,
         id_cita=cita.id_cita,
-        id_especialista=session.get('user_id'),
+        id_especialista=id_esp_real, # <--- AHORA SÍ GUARDARÁ EL ID CORRECTO
         nota_subjetiva=request.form.get('nota_subjetiva'),
         nota_objetiva=request.form.get('nota_objetiva'),
         apreciacion_clinica=request.form.get('apreciacion_clinica'),
