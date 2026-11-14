@@ -73,12 +73,12 @@
             <tbody>
                 {% for s in sesiones %}
                 <tr>
-                    <td><strong>#{{ s.id_sesion }}</strong></td>
+                    <td><strong>#{{ s.id_seguimiento }}</strong></td>
                     <td>HC-{{ "%04d"|format(s.id_historia) }}</td>
                     <td>{{ s.historia_clinica.paciente_rel.nombre }} {{ s.historia_clinica.paciente_rel.apellido }}</td>
                     <td>{{ s.fecha_sesion.strftime('%d/%m/%Y %H:%M') }}</td>
                     <td style="max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                        {{ s.evolucion_clinica }}
+                        {{ s.nota_subjetiva }}
                     </td>
                     <td>
                         <a href="{{ url_for('clinica.ver_historia', id_historia=s.id_historia) }}" class="btn btn-secondary btn-sm">
