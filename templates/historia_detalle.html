@@ -207,6 +207,22 @@
                     <label class="form-label">Ocupación Actual</label>
                     <input type="text" name="ocupacion_actual" class="form-control" value="{{ historia.ocupacion_actual or '' }}">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Estado Civil</label>
+                    <input type="text" name="estado_civil" class="form-control" value="{{ historia.estado_civil or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Religión</label>
+                    <input type="text" name="religion" class="form-control" value="{{ historia.religion or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre del Acompañante</label>
+                    <input type="text" name="nombre_acompanante" class="form-control" value="{{ historia.nombre_acompanante or '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Parentesco del Acompañante</label>
+                    <input type="text" name="parentesco_acompanante" class="form-control" value="{{ historia.parentesco_acompanante or '' }}">
+                </div>
             </div>
 
             <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">2. Antecedentes y Motivo</h3>
@@ -215,15 +231,31 @@
                 <textarea name="motivo_consulta" class="form-control" rows="2">{{ historia.motivo_consulta or '' }}</textarea>
             </div>
             <div class="form-group mb-3">
+                <label class="form-label">Tiempo de Enfermedad</label>
+                <input type="text" name="tiempo_enfermedad" class="form-control" value="{{ historia.tiempo_enfermedad or '' }}">
+            </div>
+             <div class="form-group mb-3">
+                <label class="form-label">Sintomatología Principal</label>
+                <textarea name="sintomatologia_principal" class="form-control" rows="2">{{ historia.sintomatologia_principal or '' }}</textarea>
+            </div>
+            <div class="form-group mb-3">
                 <label class="form-label">Historia de Desarrollo Social</label>
                 <textarea name="historia_desarrollo_social" class="form-control" rows="2">{{ historia.historia_desarrollo_social or '' }}</textarea>
             </div>
             <div class="form-group mb-3">
-                <label class="form-label">Antecedentes Médicos / Psicológicos</label>
+                <label class="form-label">Antecedentes Médicos Relevantes</label>
                 <textarea name="antecedentes_medicos_relevantes" class="form-control" rows="2">{{ historia.antecedentes_medicos_relevantes or '' }}</textarea>
             </div>
+             <div class="form-group mb-3">
+                <label class="form-label">Antecedentes Personales Psicológicos</label>
+                <textarea name="antecedentes_personales_psicologicos" class="form-control" rows="2">{{ historia.antecedentes_personales_psicologicos or '' }}</textarea>
+            </div>
+             <div class="form-group mb-3">
+                <label class="form-label">Antecedentes Familiares</label>
+                <textarea name="antecedentes_familiares" class="form-control" rows="2">{{ historia.antecedentes_familiares or '' }}</textarea>
+            </div>
 
-            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">3. Diagnóstico</h3>
+            <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 0.5rem;">3. Diagnóstico y Plan</h3>
             <div class="form-grid" style="display: grid; grid-template-columns: 1fr 2fr; gap: 1rem; margin-bottom: 1.5rem;">
                 <div class="form-group">
                     <label class="form-label">Código (CIE-10 / DSM-5)</label>
@@ -232,6 +264,22 @@
                 <div class="form-group">
                     <label class="form-label">Descripción del Diagnóstico</label>
                     <input type="text" name="descripcion_diagnostico" class="form-control" value="{{ historia.diagnostico_cie10_dsm5.get('descripcion', '') if historia.diagnostico_cie10_dsm5 else '' }}">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Tipo de Diagnóstico</label>
+                    <input type="text" name="tipo_diagnostico" class="form-control" value="{{ historia.tipo_diagnostico or '' }}">
+                </div>
+                 <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Objetivos Terapéuticos</label>
+                    <textarea name="objetivos_terapeuticos" class="form-control" rows="2">{{ historia.objetivos_terapeuticos or '' }}</textarea>
+                </div>
+                 <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Tipo de Intervención</label>
+                    <textarea name="tipo_intervencion" class="form-control" rows="2">{{ historia.tipo_intervencion or '' }}</textarea>
+                </div>
+                 <div class="form-group" style="grid-column: 1 / -1;">
+                    <label class="form-label">Pronóstico</label>
+                    <input type="text" name="pronostico" class="form-control" value="{{ historia.pronostico or '' }}">
                 </div>
             </div>
 
