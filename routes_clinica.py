@@ -110,6 +110,7 @@ def editar_historia(id_historia):
     historia = HistoriaClinicaPsi.query.get_or_404(id_historia)
     
     # 1. Actualizar datos básicos
+    historia.nro_historia = request.form.get('nro_historia')
     historia.grado_instruccion = request.form.get('grado_instruccion')
     historia.ocupacion_actual = request.form.get('ocupacion_actual')
     historia.estado_civil = request.form.get('estado_civil')
@@ -127,6 +128,10 @@ def editar_historia(id_historia):
     historia.antecedentes_familiares = request.form.get('antecedentes_familiares')
     
     # 3. Estructurar y actualizar los campos JSON y plan (Diagnóstico)
+    examen_mental_desc = request.form.get('examen_mental_estado_actual')
+    if examen_mental_desc is not None:
+        historia.examen_mental_estado_actual = {"descripcion": examen_mental_desc}
+
     codigo_diag = request.form.get('codigo_diagnostico')
     desc_diag = request.form.get('descripcion_diagnostico')
     
