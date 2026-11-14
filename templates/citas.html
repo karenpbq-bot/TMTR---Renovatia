@@ -113,6 +113,11 @@
                                         </button>
                                         {% endif %}
 
+                                        <!-- Botón Editar Cita (Directores, Admins, Recepción) -->
+                                        <button type="button" class="btn btn-sm btn-outline-primary rounded-circle ms-1" data-bs-toggle="modal" data-bs-target="#modalEditarCita-{{ cita.id_cita }}" title="Editar datos de la cita">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </button>
+                                    
                                         <!-- Botón Eliminar Definitivamente (Sólo Admins y Superadmins) -->
                                         {% if current_user_role in ['Superadmin', 'Administrador'] %}
                                         <form action="{{ url_for('agenda.eliminar_cita', id_cita=cita.id_cita) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('⚠️ ¿Está seguro de eliminar DEFINITIVAMENTE esta cita?');">
@@ -368,5 +373,66 @@
     {% endfor %}
 
 </div>
+
+<!-- MODAL EDITAR DATOS DE LA CITA -->
+    <div class="modal fade" id="modalEditarCita-{{ cita.id_cita }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header bg-light border-0 px-4 py-3">
+                    <h5 class="modal-title fw-bold text-dark">✏️ Editar Cita #{{ cita.id_cita }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="{{ url_for('agenda.editar_cita', id_cita=cita.id_cita) }}" method="POST">
+                    <div class="modal-body p-4 text-start">
+                        
+                        <!-- Paciente -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Paciente *</label>
+                            <select name="id_paciente" class="form-select" required>
+                                {% for p in pacientes %}
+                                <option value="{{ p.id_paciente if p.id_paciente is defined else p.id_usuario }}" {% if (p.id_paciente if p.id_paciente is defined else p.id_usuario) == cita.id_paciente %}selected{% endif %}>
+                                    {{ p.nombre ~ ' ' ~ p.apellido if p.nombre else p.nombres_apellidos }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Especialista -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Especialista *</label>
+                            {% if current_user_role == 'Especialista' %}
+                                <input type="text" class="form-control bg-light" value="{{ cita.especialista.nombre }} {{ cita.especialista.apellido }}" readonly>
+                                <input type="hidden" name="id_especialista" value="{{ cita.id_especialista }}">
+                            {% else %}
+                                <select name="id_especialista" class="form-select" required>
+                                    {% for esp in especialistas %}
+                                    <option value="{{ esp.id_especialista if esp.id_especialista is defined else esp.id_usuario }}" {% if (esp.id_especialista if esp.id_especialista is defined else esp.id_usuario) == cita.id_especialista %}selected{% endif %}>
+                                        {{ esp.nombre ~ ' ' ~ esp.apellido if esp.nombre else esp.nombres_apellidos }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            {% endif %}
+                        </div>
+
+                        <!-- Fecha y Hora -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Fecha y Hora de Inicio *</label>
+                            <input type="datetime-local" name="fecha_hora_inicio" class="form-control" value="{{ cita.fecha_hora_inicio.strftime('%Y-%m-%dT%H:%M') }}" required>
+                        </div>
+
+                        <!-- Motivo -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Motivo de la Cita</label>
+                            <input type="text" name="motivo_reserva" class="form-control" value="{{ cita.motivo_reserva or '' }}">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 px-4 pb-4">
+                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 {% endblock %}
