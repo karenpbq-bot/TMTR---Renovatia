@@ -96,6 +96,30 @@ def ver_historia(id_historia):
     historia = HistoriaClinicaPsi.query.get_or_404(id_historia)
     return render_template('historia_detalle.html', historia=historia)
 
+@clinica_bp.route('/historias/<int:id_historia>/sesion/nueva', methods=['POST'])
+@login_required
+@role_required('Superadmin', 'Director', 'Administrador', 'Especialista')
+def guardar_sesion_desde_historia(id_historia):
+    """Guarda una nueva sesión desde la vista de detalle de la historia y redirige allí mismo."""
+    user_id = session.get('user_id')
+    evolucion = request.form.get('evolucion_clinica')
+    observaciones = request.form.get('observaciones_conductuales')
+
+    if not evolucion:
+        flash('Debe redactar la evolución clínica.', 'warning')
+        return redirect(url_for('clinica.ver_historia', id_historia=id_historia))
+
+    nueva_sesion = SeguimientoPsi(
+        id_historia=id_historia,
+        id_especialista=user_id,
+        nota_subjetiva=evolucion,      # Adaptado al modelo SeguimientoPsi
+        nota_objetiva=observaciones    # Adaptado al modelo SeguimientoPsi
+    )
+    db.session.add(nueva_sesion)
+    db.session.commit()
+    
+    flash('Sesión de evolución registrada exitosamente.', 'success')
+    return redirect(url_for('clinica.ver_historia', id_historia=id_historia))
 
 @clinica_bp.route('/sesiones', methods=['GET', 'POST'])
 @login_required
