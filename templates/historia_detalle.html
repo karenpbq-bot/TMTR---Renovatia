@@ -111,22 +111,28 @@
         {% endif %}
     </div>
 
-    {% if historia.sesiones_evolucion %}
+    {% if historia.seguimientos %}
     <div style="display: flex; flex-direction: column; gap: 1rem;">
-        {% for s in historia.sesiones_evolucion | sort(attribute='fecha_sesion', reverse=True) %}
+        {% for s in historia.seguimientos | sort(attribute='fecha_sesion', reverse=True) %}
         <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1rem; background: #ffffff;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: var(--text-muted); font-size: 0.85rem;">
-                <span><strong>Sesión #{{ s.id_sesion }}</strong></span>
+                <span><strong>Sesión #{{ s.id_seguimiento }}</strong></span>
                 <span><i class="fa-regular fa-clock"></i> {{ s.fecha_sesion.strftime('%d/%m/%Y - %H:%M hrs') }}</span>
             </div>
             <div style="margin-bottom: 0.5rem;">
-                <strong style="color: var(--primary);">Evolución Clínica:</strong>
-                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.evolucion_clinica }}</p>
+                <strong style="color: var(--primary);">Evolución Clínica (Subjetiva):</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.nota_subjetiva }}</p>
             </div>
-            {% if s.observaciones_conductuales %}
+            {% if s.nota_objetiva %}
             <div>
-                <strong>Observaciones Conductuales:</strong>
-                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.observaciones_conductuales }}</p>
+                <strong>Observaciones Conductuales (Objetiva):</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.nota_objetiva }}</p>
+            </div>
+            {% endif %}
+            {% if s.apreciacion_clinica %}
+            <div>
+                <strong>Apreciación / Plan:</strong>
+                <p style="color: var(--text-secondary); margin-top: 0.2rem;">{{ s.apreciacion_clinica }} - {{ s.plan_tareas }}</p>
             </div>
             {% endif %}
         </div>
