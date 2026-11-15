@@ -236,6 +236,8 @@
                 },
                 selectable: {% if current_user_role == 'Paciente' %}false{% else %}true{% endif %},
                 selectMirror: true,
+                
+                // Acción al seleccionar un espacio vacío (Crear Cita)
                 select: function(info) {
                     {% if current_user_role != 'Paciente' %}
                     var fechaIso = info.startStr.slice(0, 16); 
@@ -250,9 +252,23 @@
                     }
                     {% endif %}
                 },
+                
+                // NUEVO: Acción al hacer clic en una cita existente (Editar Cita)
+                eventClick: function(info) {
+                    var citaId = info.event.id;
+                    if (citaId) {
+                        var modalEl = document.getElementById('modalEditarCita-' + citaId);
+                        if (modalEl) {
+                            var modal = new bootstrap.Modal(modalEl);
+                            modal.show();
+                        }
+                    }
+                },
+                
                 events: [
                     {% for cita in citas %}
                     {
+                        id: '{{ cita.id_cita }}', // NUEVO: Se agregó el ID para conectar con el modal
                         title: '👤 Cita: {{ cita.paciente.nombre }} ({{ cita.estado_cita }})',
                         start: '{{ cita.fecha_hora_inicio.isoformat() }}',
                         end: '{{ cita.fecha_hora_fin.isoformat() }}',
@@ -265,6 +281,21 @@
             calendar.render();
         }
     });
+
+    // Función para saltar al Cronograma Semanal al hacer clic en Reprogramar desde la lista
+    function verEnCalendarioSemanal(fechaIso) {
+        var cronogramaTab = document.getElementById('cronograma-tab');
+        if (cronogramaTab) {
+            var tab = new bootstrap.Tab(cronogramaTab);
+            tab.show();
+        }
+
+        if (calendar) {
+            calendar.changeView('timeGridWeek', fechaIso);
+            calendar.gotoDate(fechaIso);
+        }
+    }
+</script>
 
     // Función para saltar al Cronograma Semanal al hacer clic en Reprogramar desde la lista
     function verEnCalendarioSemanal(fechaIso) {
