@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import db, CitaUni, PacienteUni, EspecialistaUni, UsuarioUni, ReprogramacionUni, DisponibilidadUni, get_peru_time, PermisoHistoriaPsi, HistoriaClinicaPsi
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+import calendar
 from routes_auth import login_required, role_required
 
 agenda_bp = Blueprint('agenda', __name__)
@@ -243,7 +244,7 @@ def reprogramar_cita(id_cita):
 @agenda_bp.route('/disponibilidad', methods=['GET', 'POST'])
 @login_required
 def gestionar_disponibilidad():
-    """Gestiona la plantilla semanal por mes (T1-T4), copia del mes anterior y excepciones"""
+    """Gestiona plantilla semanal por mes y calendario diario de excepciones/intervalos"""
     cliente_id = session.get('id_cliente')
     rol = session.get('user_role')
     user_id = session.get('user_id')
@@ -269,7 +270,6 @@ def gestionar_disponibilidad():
         intervalo_minutos = request.form.get('intervalo_minutos', type=int) or 50
 
         try:
-            # ACCIÓN A: Copiar horario del mes anterior
             if accion == 'copiar_mes_anterior':
                 anio, mes = map(int, mes_gestion.split('-'))
                 mes_anterior = f"{anio - 1}-12" if mes == 1 else f"{anio}-{mes - 1:02d}"
@@ -291,7 +291,7 @@ def gestionar_disponibilidad():
                 ).delete(synchronize_session=False)
 
                 for b in bloques_anteriores:
-                    copia = DisponibilidadUni(
+                    db.session.add(DisponibilidadUni(
                         id_cliente=cliente_id,
                         id_especialista=especialista_id,
                         mes_gestion=mes_gestion,
@@ -301,16 +301,14 @@ def gestionar_disponibilidad():
                         bloqueado_todo_el_dia=b.bloqueado_todo_el_dia,
                         intervalo_minutos=b.intervalo_minutos or 50,
                         estado=True
-                    )
-                    db.session.add(copia)
+                    ))
 
                 db.session.commit()
                 flash(f'Horario de {mes_anterior} copiado exitosamente a {mes_gestion}.', 'success')
                 return redirect(url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_id, mes_gestion=mes_gestion))
 
-            # ACCIÓN B: Guardar plantilla semanal del mes seleccionado
+            # Guardar plantilla semanal del mes
             dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-
             DisponibilidadUni.query.filter(
                 DisponibilidadUni.id_especialista == especialista_id,
                 DisponibilidadUni.mes_gestion == mes_gestion,
@@ -322,7 +320,7 @@ def gestionar_disponibilidad():
                 bloqueado_dia = request.form.get(f'bloquear_{dia_lower}') == 'on'
 
                 if bloqueado_dia:
-                    bloqueo_total = DisponibilidadUni(
+                    db.session.add(DisponibilidadUni(
                         id_cliente=cliente_id,
                         id_especialista=especialista_id,
                         mes_gestion=mes_gestion,
@@ -330,71 +328,67 @@ def gestionar_disponibilidad():
                         bloqueado_todo_el_dia=True,
                         intervalo_minutos=intervalo_minutos,
                         estado=True
-                    )
-                    db.session.add(bloqueo_total)
+                    ))
                 else:
                     for turno in ['T1', 'T2', 'T3', 'T4']:
                         h_ini_str = request.form.get(f'{dia_lower}_{turno}_inicio')
                         h_fin_str = request.form.get(f'{dia_lower}_{turno}_fin')
-
                         if h_ini_str and h_fin_str:
-                            h_inicio = datetime.strptime(h_ini_str, '%H:%M').time()
-                            h_fin = datetime.strptime(h_fin_str, '%H:%M').time()
-
-                            turno_reg = DisponibilidadUni(
+                            db.session.add(DisponibilidadUni(
                                 id_cliente=cliente_id,
                                 id_especialista=especialista_id,
                                 mes_gestion=mes_gestion,
                                 dia_semana=dia,
-                                hora_inicio=h_inicio,
-                                hora_fin=h_fin,
+                                hora_inicio=datetime.strptime(h_ini_str, '%H:%M').time(),
+                                hora_fin=datetime.strptime(h_fin_str, '%H:%M').time(),
                                 bloqueado_todo_el_dia=False,
                                 intervalo_minutos=intervalo_minutos,
                                 estado=True
-                            )
-                            db.session.add(turno_reg)
+                            ))
 
-            # Guardar excepciones puntuales si se llenaron
-            fechas_exc = request.form.getlist('exc_fecha[]')
-            bloqueados_exc = request.form.getlist('exc_bloqueado[]')
-            inicios_exc = request.form.getlist('exc_inicio[]')
-            fines_exc = request.form.getlist('exc_fin[]')
+            # Guardar ajustes/excepciones por fecha específica (múltiples intervalos permitidos)
+            fechas_modificadas = request.form.getlist('fecha_modificada')
+            for fecha_str in fechas_modificadas:
+                if not fecha_str:
+                    continue
+                fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d').date()
+                bloqueado = request.form.get(f'exc_bloqueado_{fecha_str}') == 'on'
+                inicios = request.form.getlist(f'exc_inicio_{fecha_str}[]')
+                fines = request.form.getlist(f'exc_fin_{fecha_str}[]')
 
-            for i, fecha_str in enumerate(fechas_exc):
-                if fecha_str:
-                    fecha_obj = datetime.strptime(fecha_str, '%Y-%m-%d').date()
-                    bloqueado = bloqueados_exc[i] == '1' if i < len(bloqueados_exc) else False
-                    h_ini_str = inicios_exc[i] if i < len(inicios_exc) else ''
-                    h_fin_str = fines_exc[i] if i < len(fines_exc) else ''
+                # Limpiar registros previos de esa fecha exacta para guardar el estado actual
+                DisponibilidadUni.query.filter_by(
+                    id_especialista=especialista_id,
+                    fecha_especifica=fecha_obj
+                ).delete(synchronize_session=False)
 
-                    h_inicio = datetime.strptime(h_ini_str, '%H:%M').time() if (h_ini_str and not bloqueado) else None
-                    h_fin = datetime.strptime(h_fin_str, '%H:%M').time() if (h_fin_str and not bloqueado) else None
-
-                    reg = DisponibilidadUni.query.filter_by(
+                if bloqueado:
+                    db.session.add(DisponibilidadUni(
+                        id_cliente=cliente_id,
                         id_especialista=especialista_id,
-                        fecha_especifica=fecha_obj
-                    ).first()
-
-                    if reg:
-                        reg.mes_gestion = fecha_obj.strftime('%Y-%m')
-                        reg.hora_inicio = h_inicio
-                        reg.hora_fin = h_fin
-                        reg.bloqueado_todo_el_dia = bloqueado
-                        reg.intervalo_minutos = intervalo_minutos
-                    else:
-                        nueva_exc = DisponibilidadUni(
-                            id_cliente=cliente_id,
-                            id_especialista=especialista_id,
-                            mes_gestion=fecha_obj.strftime('%Y-%m'),
-                            dia_semana='Excepción',
-                            fecha_especifica=fecha_obj,
-                            hora_inicio=h_inicio,
-                            hora_fin=h_fin,
-                            bloqueado_todo_el_dia=bloqueado,
-                            intervalo_minutos=intervalo_minutos,
-                            estado=True
-                        )
-                        db.session.add(nueva_exc)
+                        mes_gestion=fecha_obj.strftime('%Y-%m'),
+                        dia_semana='Excepción',
+                        fecha_especifica=fecha_obj,
+                        bloqueado_todo_el_dia=True,
+                        intervalo_minutos=intervalo_minutos,
+                        estado=True
+                    ))
+                else:
+                    for idx, h_ini_str in enumerate(inicios):
+                        h_fin_str = fines[idx] if idx < len(fines) else ''
+                        if h_ini_str and h_fin_str:
+                            db.session.add(DisponibilidadUni(
+                                id_cliente=cliente_id,
+                                id_especialista=especialista_id,
+                                mes_gestion=fecha_obj.strftime('%Y-%m'),
+                                dia_semana='Excepción',
+                                fecha_especifica=fecha_obj,
+                                hora_inicio=datetime.strptime(h_ini_str, '%H:%M').time(),
+                                hora_fin=datetime.strptime(h_fin_str, '%H:%M').time(),
+                                bloqueado_todo_el_dia=False,
+                                intervalo_minutos=intervalo_minutos,
+                                estado=True
+                            ))
 
             db.session.commit()
             flash(f'Disponibilidad de {mes_gestion} guardada correctamente.', 'success')
@@ -405,11 +399,24 @@ def gestionar_disponibilidad():
 
         return redirect(url_for('agenda.gestionar_disponibilidad', id_especialista=especialista_id, mes_gestion=mes_gestion))
 
-    # Vista GET: cargar datos filtrados por especialista y mes
+    # Vista GET: construir todos los días del mes seleccionado
     especialistas = EspecialistaUni.query.filter_by(id_cliente=cliente_id).all()
     plantilla_base = []
-    excepciones = []
     horarios_map = {}
+    dias_del_mes = []
+
+    anio, mes = map(int, mes_gestion.split('-'))
+    _, total_dias = calendar.monthrange(anio, mes)
+    nombres_dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+
+    for d in range(1, total_dias + 1):
+        f_obj = date(anio, mes, d)
+        dias_del_mes.append({
+            'fecha_str': f_obj.strftime('%Y-%m-%d'),
+            'etiqueta': f"{d:02d}/{mes:02d} ({nombres_dias[f_obj.weekday()]})"
+        })
+
+    excepciones_por_fecha = {}
 
     if especialista_id:
         plantilla_base = DisponibilidadUni.query.filter_by(
@@ -434,7 +441,19 @@ def gestionar_disponibilidad():
             DisponibilidadUni.id_especialista == especialista_id,
             DisponibilidadUni.mes_gestion == mes_gestion,
             DisponibilidadUni.fecha_especifica != None
-        ).order_by(DisponibilidadUni.fecha_especifica.desc()).all()
+        ).order_by(DisponibilidadUni.fecha_especifica.asc(), DisponibilidadUni.id_disponibilidad.asc()).all()
+
+        for exc in excepciones:
+            f_key = exc.fecha_especifica.strftime('%Y-%m-%d')
+            if f_key not in excepciones_por_fecha:
+                excepciones_por_fecha[f_key] = {'bloqueado': False, 'rangos': []}
+            if exc.bloqueado_todo_el_dia:
+                excepciones_por_fecha[f_key]['bloqueado'] = True
+            elif exc.hora_inicio and exc.hora_fin:
+                excepciones_por_fecha[f_key]['rangos'].append({
+                    'inicio': exc.hora_inicio.strftime('%H:%M'),
+                    'fin': exc.hora_fin.strftime('%H:%M')
+                })
 
     intervalo_activo = plantilla_base[0].intervalo_minutos if (plantilla_base and plantilla_base[0].intervalo_minutos) else 50
 
@@ -443,7 +462,8 @@ def gestionar_disponibilidad():
         especialistas=especialistas,
         plantilla_base=plantilla_base,
         horarios_map=horarios_map,
-        excepciones=excepciones,
+        dias_del_mes=dias_del_mes,
+        excepciones_por_fecha=excepciones_por_fecha,
         especialista_activo=especialista_id,
         mes_activo=mes_gestion,
         intervalo_activo=intervalo_activo
