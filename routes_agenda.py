@@ -411,9 +411,11 @@ def gestionar_disponibilidad():
 
     for d in range(1, total_dias + 1):
         f_obj = date(anio, mes, d)
+        nombre_dia = nombres_dias[f_obj.weekday()]
         dias_del_mes.append({
             'fecha_str': f_obj.strftime('%Y-%m-%d'),
-            'etiqueta': f"{d:02d}/{mes:02d} ({nombres_dias[f_obj.weekday()]})"
+            'dia_semana_key': nombre_dia.lower(),
+            'etiqueta': f"{d:02d}/{mes:02d} ({nombre_dia})"
         })
 
     excepciones_por_fecha = {}
