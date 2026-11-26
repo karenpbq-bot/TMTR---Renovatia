@@ -183,14 +183,15 @@ class DisponibilidadUni(db.Model):
     id_disponibilidad = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_cliente = db.Column(db.Integer, db.ForeignKey('uni_clientes.id_cliente'), nullable=False)
     id_especialista = db.Column(db.Integer, db.ForeignKey('uni_especialistas.id_especialista'), nullable=False)
+    mes_gestion = db.Column(db.String(7), nullable=True)  # Formato YYYY-MM (ej. 2026-11)
     
-    dia_semana = db.Column(db.String(20), nullable=False) # Lunes, Martes, etc.
-    fecha_especifica = db.Column(db.Date, nullable=True) # NUEVO: Para excepciones de días exactos del mes
-    bloqueado_todo_el_dia = db.Column(db.Boolean, default=False) # NUEVO: Bloqueo total de jornada
+    dia_semana = db.Column(db.String(20), nullable=False)
+    fecha_especifica = db.Column(db.Date, nullable=True)
+    bloqueado_todo_el_dia = db.Column(db.Boolean, default=False)
     
     hora_inicio = db.Column(db.Time, nullable=True)
     hora_fin = db.Column(db.Time, nullable=True)
-    intervalo_minutos = db.Column(db.Integer, default=45)
+    intervalo_minutos = db.Column(db.Integer, default=60)
     estado = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
