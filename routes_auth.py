@@ -74,22 +74,6 @@ def preparar_sesion_usuario(usuario_o_entidad, rol_asignado, id_cliente):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Gestiona el inicio de sesión unificado para el ecosistema"""
-    
-    # -----------------------------------------------------------------------
-    # GESTIÓN DEL MÉTODO GET: Cargar la pantalla y buscar el logo del cliente
-    # -----------------------------------------------------------------------
-    if request.method == 'GET':
-        codigo_cliente = request.args.get('c')
-        logo_cliente = None
-
-        if codigo_cliente:
-            cliente = ClienteEmpresa.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
-            
-            if cliente and cliente.nombre_marca:
-                nombre_archivo = cliente.nombre_marca.lower().replace(" ", "")
-                logo_cliente = url_for('static', filename=f'logos/{nombre_archivo}.png')
-
-        return render_template('login.html', logo_cliente=logo_cliente)
 
     # -----------------------------------------------------------------------
     # GESTIÓN DEL MÉTODO POST: Validar credenciales de forma universal
@@ -113,7 +97,7 @@ def login():
             session['user_id'] = usuario.id_usuario
             session['user_name'] = usuario.nombres_apellidos
             
-            # Carga universal de rol, ID de cliente y logo (aplica para recepcionistas y futuros roles)
+            # Carga universal de rol, ID de cliente y logo
             preparar_sesion_usuario(usuario, usuario.rol, usuario.id_cliente)
             
             flash(f'Bienvenido al sistema, {usuario.nombres_apellidos}', 'success')
@@ -150,6 +134,21 @@ def login():
 
         flash('Credenciales incorrectas. Verifique su correo y contraseña.', 'danger')
         return redirect(url_for('auth.login', c=request.args.get('c')))
+
+    # -----------------------------------------------------------------------
+    # GESTIÓN DE GET Y HEAD: Cargar la pantalla y buscar el logo del cliente
+    # -----------------------------------------------------------------------
+    codigo_cliente = request.args.get('c')
+    logo_cliente = None
+
+    if codigo_cliente:
+        cliente = ClienteEmpresa.query.filter_by(codigo_invitacion_5d=codigo_cliente).first()
+        
+        if cliente and cliente.nombre_marca:
+            nombre_archivo = cliente.nombre_marca.lower().replace(" ", "")
+            logo_cliente = url_for('static', filename=f'logos/{nombre_archivo}.png')
+
+    return render_template('login.html', logo_cliente=logo_cliente)
 
 
 @auth_bp.route('/logout')
