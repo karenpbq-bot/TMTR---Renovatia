@@ -41,8 +41,9 @@ def gestionar_citas():
         motivo = request.form.get('motivo_reserva', '')
 
         try:
+            duracion = request.form.get('duracion_minutos', type=int) or 50
             fecha_hora_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
-            fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=45)
+            fecha_hora_fin = fecha_hora_inicio + timedelta(minutes=duracion)
 
             solapada = CitaUni.query.filter(
                 CitaUni.id_especialista == int(id_especialista),
@@ -298,7 +299,7 @@ def gestionar_disponibilidad():
                         hora_inicio=b.hora_inicio,
                         hora_fin=b.hora_fin,
                         bloqueado_todo_el_dia=b.bloqueado_todo_el_dia,
-                        intervalo_minutos=b.intervalo_minutos or 60,
+                        intervalo_minutos=b.intervalo_minutos or 50,
                         estado=True
                     )
                     db.session.add(copia)
@@ -494,12 +495,12 @@ def editar_cita(id_cita):
     motivo = request.form.get('motivo_reserva', '')
 
     try:
+        duracion = request.form.get('duracion_minutos', type=int) or 50
         nueva_inicio = datetime.strptime(fecha_hora_str, '%Y-%m-%dT%H:%M')
-        # Mantenemos el tiempo estándar de 45 min
-        nueva_fin = nueva_inicio + timedelta(minutes=45)
+        nueva_fin = nueva_inicio + timedelta(minutes=duracion)
 
-        # Si se cambió la hora o el especialista, validamos que no haya choque con otra cita
-        if (nueva_inicio != cita.fecha_hora_inicio) or (int(id_especialista) != cita.id_especialista):
+        # Si se cambió la hora, la duración o el especialista, validamos que no haya choque con otra cita
+        if (nueva_inicio != cita.fecha_hora_inicio) or (nueva_fin != cita.fecha_hora_fin) or (int(id_especialista) != cita.id_especialista):
             solapada = CitaUni.query.filter(
                 CitaUni.id_especialista == int(id_especialista),
                 CitaUni.estado_cita.in_(['Programada', 'Confirmada']),
