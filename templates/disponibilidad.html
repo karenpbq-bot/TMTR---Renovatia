@@ -50,7 +50,8 @@
         </div>
 
         <!-- PESTAÑA: PLANTILLA SEMANAL -->
-        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+        <div id="tab_plantilla" class="tab-content">
+            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
                 <button type="button" class="btn btn-outline" onclick="replicarLunes()" style="flex: 1; border-color: #0d9488; color: #0d9488;">
                     Replicar Lunes a Toda la Semana
                 </button>
@@ -94,33 +95,53 @@
             {% endfor %}
         </div>
 
-        <!-- PESTAÑA: EXCEPCIONES POR FECHA -->
-
-        <!-- PESTAÑA: EXCEPCIONES POR FECHA -->
+        <!-- PESTAÑA: EXCEPCIONES POR FECHA (TODOS LOS DÍAS DEL MES) -->
         <div id="tab_excepciones" class="tab-content" style="display: none;">
-            <p style="text-align: center; color: #6b7280; font-style: italic;">Selecciona el mes arriba para cargar los días específicos que requieren excepciones (viajes, feriados).</p>
-            
-            <!-- Aquí se inyectarán los días del mes vía JS o puedes usar un input date libre para agregar excepciones dinámicas -->
-            <div class="clinical-section" style="border-color: #0d9488;">
-                <div class="clinical-section-title" style="color: #0d9488;">Agregar Excepción</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Fecha Específica</label>
-                        <input type="date" name="exc_fecha[]" class="form-control">
+            <p style="color: #4b5563; font-size: 0.92rem; margin-bottom: 1rem;">
+                Selecciona un día del mes ({{ mes_activo }}) para bloquearlo por completo o registrar uno o más intervalos horarios específicos (por ejemplo, tarde libre o reunión en la mañana).
+            </p>
+
+            {% for d_item in dias_del_mes %}
+            {% set f_str = d_item.fecha_str %}
+            {% set exc_dia = excepciones_por_fecha.get(f_str) %}
+            <div class="clinical-section" style="margin-bottom: 0.75rem; border: 1px solid {% if exc_dia %}#0d9488{% else %}#e5e7eb{% endif %}; border-radius: 8px; padding: 0.85rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                    <div>
+                        <strong>{{ d_item.etiqueta }}</strong>
+                        {% if exc_dia %}
+                            <span style="margin-left: 0.5rem; font-size: 0.8rem; color: #0d9488; font-weight: bold;">[Ajuste guardado]</span>
+                        {% endif %}
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">Bloqueo Total</label>
-                        <select name="exc_bloqueado[]" class="form-select">
-                            <option value="0">No, usar horario específico</option>
-                            <option value="1">Sí, bloquear todo el día</option>
-                        </select>
+                    <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <label style="color: #dc2626; font-weight: bold; margin: 0;">
+                            <input type="checkbox" name="exc_bloqueado_{{ f_str }}" {% if exc_dia and exc_dia.bloqueado %}checked{% endif %} onchange="marcarFechaModificada('{{ f_str }}')"> Bloquear todo el día
+                        </label>
+                        <button type="button" class="btn btn-sm btn-outline" style="border-color: #0d9488; color: #0d9488;" onclick="agregarIntervaloFecha('{{ f_str }}')">
+                            + Intervalo
+                        </button>
                     </div>
                 </div>
-                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <input type="time" name="exc_inicio[]" class="form-control" placeholder="Inicio">
-                    <input type="time" name="exc_fin[]" class="form-control" placeholder="Fin">
+
+                <div id="intervalos_{{ f_str }}" style="margin-top: 0.6rem;">
+                    {% if exc_dia and exc_dia.rangos %}
+                        {% for r in exc_dia.rangos %}
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
+                            <input type="time" name="exc_inicio_{{ f_str }}[]" class="form-control" style="width: 145px;" value="{{ r.inicio }}" onchange="marcarFechaModificada('{{ f_str }}')">
+                            <span>a</span>
+                            <input type="time" name="exc_fin_{{ f_str }}[]" class="form-control" style="width: 145px;" value="{{ r.fin }}" onchange="marcarFechaModificada('{{ f_str }}')">
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
+                            <input type="time" name="exc_inicio_{{ f_str }}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('{{ f_str }}')">
+                            <span>a</span>
+                            <input type="time" name="exc_fin_{{ f_str }}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('{{ f_str }}')">
+                        </div>
+                    {% endif %}
                 </div>
+                <input type="hidden" id="mod_{{ f_str }}" {% if exc_dia %}name="fecha_modificada" value="{{ f_str }}"{% endif %}>
             </div>
+            {% endfor %}
         </div>
 
         <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
@@ -202,6 +223,28 @@
             }
         });
         alert("¡Horarios del Lunes replicados a toda la semana exitosamente!");
+    }
+
+    function marcarFechaModificada(fechaStr) {
+        const hiddenInput = document.getElementById('mod_' + fechaStr);
+        if (hiddenInput) {
+            hiddenInput.name = 'fecha_modificada';
+            hiddenInput.value = fechaStr;
+        }
+    }
+
+    function agregarIntervaloFecha(fechaStr) {
+        marcarFechaModificada(fechaStr);
+        const cont = document.getElementById('intervalos_' + fechaStr);
+        if (!cont) return;
+        const fila = document.createElement('div');
+        fila.style.cssText = 'display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;';
+        fila.innerHTML = `
+            <input type="time" name="exc_inicio_${fechaStr}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('${fechaStr}')">
+            <span>a</span>
+            <input type="time" name="exc_fin_${fechaStr}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('${fechaStr}')">
+        `;
+        cont.appendChild(fila);
     }
 </script>
 {% endblock %}
