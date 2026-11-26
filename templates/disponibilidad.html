@@ -13,20 +13,33 @@
 <div class="card-panel">
     <form id="formDisponibilidad" action="{{ url_for('agenda.gestionar_disponibilidad') }}" method="POST">
         
-        <!-- Selector de Especialista y Mes -->
+        <!-- Selector de Especialista, Mes y Duración -->
         <div class="form-grid" style="margin-bottom: 2rem;">
             <div class="form-group">
                 <label for="id_especialista" class="form-label">Seleccionar Especialista:</label>
-                <select id="id_especialista" name="id_especialista" class="form-select" required>
+                <select id="id_especialista" name="id_especialista" class="form-select" required onchange="recargarDisponibilidad()">
                     <option value="">-- Seleccione --</option>
                     {% for esp in especialistas %}
-                    <option value="{{ esp.id_especialista }}">{{ esp.nombre }} {{ esp.apellido }}</option>
+                    <option value="{{ esp.id_especialista }}" {% if especialista_activo == esp.id_especialista %}selected{% endif %}>
+                        {{ esp.nombre }} {{ esp.apellido }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
                 <label for="mes_gestion" class="form-label">Mes de Gestión:</label>
-                <input type="month" id="mes_gestion" name="mes_gestion" class="form-control" required>
+                <input type="month" id="mes_gestion" name="mes_gestion" class="form-control" value="{{ mes_activo }}" required onchange="recargarDisponibilidad()">
+            </div>
+            <div class="form-group">
+                <label for="intervalo_minutos" class="form-label">Duración de Sesión (min):</label>
+                <select id="intervalo_minutos" name="intervalo_minutos" class="form-select">
+                    <option value="30" {% if intervalo_activo == 30 %}selected{% endif %}>30 minutos</option>
+                    <option value="45" {% if intervalo_activo == 45 %}selected{% endif %}>45 minutos</option>
+                    <option value="50" {% if intervalo_activo == 50 or not intervalo_activo %}selected{% endif %}>50 minutos (Por defecto)</option>
+                    <option value="60" {% if intervalo_activo == 60 %}selected{% endif %}>60 minutos</option>
+                    <option value="90" {% if intervalo_activo == 90 %}selected{% endif %}>90 minutos</option>
+                    <option value="120" {% if intervalo_activo == 120 %}selected{% endif %}>120 minutos</option>
+                </select>
             </div>
         </div>
 
@@ -37,39 +50,51 @@
         </div>
 
         <!-- PESTAÑA: PLANTILLA SEMANAL -->
-        <div id="tab_plantilla" class="tab-content">
-            <div style="margin-bottom: 1rem;">
-                <button type="button" class="btn btn-outline" onclick="replicarLunes()" style="width: 100%; border-color: #0d9488; color: #0d9488;">
+        <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                <button type="button" class="btn btn-outline" onclick="replicarLunes()" style="flex: 1; border-color: #0d9488; color: #0d9488;">
                     Replicar Lunes a Toda la Semana
+                </button>
+                <button type="submit" name="accion" value="copiar_mes_anterior" class="btn btn-outline"
+                        onclick="return confirm('¿Desea copiar la plantilla semanal del mes anterior a {{ mes_activo }}? Esto reemplazará los bloques actuales de este mes.');"
+                        style="flex: 1; border-color: #6d28d9; color: #6d28d9;">
+                    Copiar Horario del Mes Anterior
                 </button>
             </div>
 
             {% set dias_semana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] %}
             {% for dia in dias_semana %}
+            {% set d_key = dia|lower %}
+            {% set datos_dia = horarios_map.get(d_key, {'bloqueado': False, 'turnos': []}) %}
             <div class="clinical-section" style="margin-bottom: 1rem; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem;">
                     <h3 style="margin: 0; font-size: 1.1rem;">{{ dia }}</h3>
                     <div style="display: flex; gap: 1rem; align-items: center;">
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarDia('{{ dia|lower }}')">Limpiar</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarDia('{{ d_key }}')">Limpiar</button>
                         <label style="color: #dc2626; font-weight: bold;">
-                            <input type="checkbox" name="bloquear_{{ dia|lower }}" onchange="toggleBloqueoDia('{{ dia|lower }}', this.checked)"> Bloquear día
+                            <input type="checkbox" name="bloquear_{{ d_key }}" {% if datos_dia.bloqueado %}checked{% endif %} onchange="toggleBloqueoDia('{{ d_key }}', this.checked)"> Bloquear día
                         </label>
                     </div>
                 </div>
 
-                <div id="bloques_{{ dia|lower }}">
+                <div id="bloques_{{ d_key }}">
                     {% for turno in ['T1', 'T2', 'T3', 'T4'] %}
+                    {% set t_idx = loop.index0 %}
+                    {% set t_val = datos_dia.turnos[t_idx] if t_idx < datos_dia.turnos|length else None %}
                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
                         <span style="width: 30px; color: #6b7280;">{{ turno }}</span>
-                        <input type="time" name="{{ dia|lower }}_{{ turno }}_inicio" class="form-control" style="width: 150px;">
+                        <input type="time" name="{{ d_key }}_{{ turno }}_inicio" class="form-control" style="width: 150px;"
+                               value="{{ t_val.inicio if t_val else '' }}" {% if datos_dia.bloqueado %}disabled{% endif %}>
                         <span>a</span>
-                        <input type="time" name="{{ dia|lower }}_{{ turno }}_fin" class="form-control" style="width: 150px;">
+                        <input type="time" name="{{ d_key }}_{{ turno }}_fin" class="form-control" style="width: 150px;"
+                               value="{{ t_val.fin if t_val else '' }}" {% if datos_dia.bloqueado %}disabled{% endif %}>
                     </div>
                     {% endfor %}
                 </div>
             </div>
             {% endfor %}
         </div>
+
+        <!-- PESTAÑA: EXCEPCIONES POR FECHA -->
 
         <!-- PESTAÑA: EXCEPCIONES POR FECHA -->
         <div id="tab_excepciones" class="tab-content" style="display: none;">
@@ -99,7 +124,7 @@
         </div>
 
         <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
-            <button type="submit" class="btn btn-primary" style="background: #6d28d9; padding: 1rem 2rem; font-size: 1.1rem;">
+            <button type="submit" name="accion" value="guardar" class="btn btn-primary" style="background: #6d28d9; padding: 1rem 2rem; font-size: 1.1rem;">
                 Guardar Configuración de Disponibilidad
             </button>
         </div>
@@ -107,6 +132,15 @@
 </div>
 
 <script>
+    // Recargar vista al cambiar especialista o mes de gestión
+    function recargarDisponibilidad() {
+        const esp = document.getElementById('id_especialista').value;
+        const mes = document.getElementById('mes_gestion').value;
+        if (esp) {
+            window.location.href = `{{ url_for('agenda.gestionar_disponibilidad') }}?id_especialista=${esp}&mes_gestion=${mes}`;
+        }
+    }
+    
     // Lógica para cambiar entre pestañas
     function showTab(tabName) {
         document.getElementById('tab_plantilla').style.display = tabName === 'plantilla' ? 'block' : 'none';
