@@ -95,49 +95,55 @@
             {% endfor %}
         </div>
 
-        <!-- PESTAÑA: EXCEPCIONES POR FECHA (TODOS LOS DÍAS DEL MES) -->
+       <!-- PESTAÑA: EXCEPCIONES POR FECHA (4 BLOQUES T1-T4 POR DÍA DEL MES) -->
         <div id="tab_excepciones" class="tab-content" style="display: none;">
             <p style="color: #4b5563; font-size: 0.92rem; margin-bottom: 1rem;">
-                Selecciona un día del mes ({{ mes_activo }}) para bloquearlo por completo o registrar uno o más intervalos horarios específicos (por ejemplo, tarde libre o reunión en la mañana).
+                Selecciona un día específico del mes (<strong>{{ mes_activo }}</strong>) para bloquearlo todo el día o configurar hasta <strong>4 bloques horarios (T1–T4)</strong> distintos de su plantilla semanal.
             </p>
 
             {% for d_item in dias_del_mes %}
             {% set f_str = d_item.fecha_str %}
             {% set exc_dia = excepciones_por_fecha.get(f_str) %}
-            <div class="clinical-section" style="margin-bottom: 0.75rem; border: 1px solid {% if exc_dia %}#0d9488{% else %}#e5e7eb{% endif %}; border-radius: 8px; padding: 0.85rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+            {% set base_dia = horarios_map.get(d_item.dia_semana_key) %}
+            <div class="clinical-section" style="margin-bottom: 0.85rem; border: 1px solid {% if exc_dia %}#0d9488{% else %}#e5e7eb{% endif %}; border-radius: 8px; padding: 0.9rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.6rem; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.45rem;">
                     <div>
                         <strong>{{ d_item.etiqueta }}</strong>
                         {% if exc_dia %}
-                            <span style="margin-left: 0.5rem; font-size: 0.8rem; color: #0d9488; font-weight: bold;">[Ajuste guardado]</span>
+                            <span style="margin-left: 0.5rem; font-size: 0.8rem; color: #0d9488; font-weight: bold;">[Excepción guardada]</span>
+                        {% elif base_dia and base_dia.bloqueado %}
+                            <span style="margin-left: 0.5rem; font-size: 0.8rem; color: #dc2626;">(Bloqueado en plantilla semanal)</span>
+                        {% elif base_dia and base_dia.turnos %}
+                            <span style="margin-left: 0.5rem; font-size: 0.8rem; color: #6b7280;">
+                                (Base: {% for t in base_dia.turnos %}{{ t.inicio }}-{{ t.fin }}{% if not loop.last %}, {% endif %}{% endfor %})
+                            </span>
                         {% endif %}
                     </div>
                     <div style="display: flex; gap: 0.75rem; align-items: center;">
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="limpiarExcepcionFecha('{{ f_str }}')">Limpiar</button>
                         <label style="color: #dc2626; font-weight: bold; margin: 0;">
-                            <input type="checkbox" name="exc_bloqueado_{{ f_str }}" {% if exc_dia and exc_dia.bloqueado %}checked{% endif %} onchange="marcarFechaModificada('{{ f_str }}')"> Bloquear todo el día
+                            <input type="checkbox" name="exc_bloqueado_{{ f_str }}" {% if exc_dia and exc_dia.bloqueado %}checked{% endif %} onchange="marcarFechaModificada('{{ f_str }}'); toggleBloqueoExcepcion('{{ f_str }}', this.checked)"> Bloquear todo el día
                         </label>
-                        <button type="button" class="btn btn-sm btn-outline" style="border-color: #0d9488; color: #0d9488;" onclick="agregarIntervaloFecha('{{ f_str }}')">
-                            + Intervalo
-                        </button>
                     </div>
                 </div>
 
-                <div id="intervalos_{{ f_str }}" style="margin-top: 0.6rem;">
-                    {% if exc_dia and exc_dia.rangos %}
-                        {% for r in exc_dia.rangos %}
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
-                            <input type="time" name="exc_inicio_{{ f_str }}[]" class="form-control" style="width: 145px;" value="{{ r.inicio }}" onchange="marcarFechaModificada('{{ f_str }}')">
-                            <span>a</span>
-                            <input type="time" name="exc_fin_{{ f_str }}[]" class="form-control" style="width: 145px;" value="{{ r.fin }}" onchange="marcarFechaModificada('{{ f_str }}')">
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
-                            <input type="time" name="exc_inicio_{{ f_str }}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('{{ f_str }}')">
-                            <span>a</span>
-                            <input type="time" name="exc_fin_{{ f_str }}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('{{ f_str }}')">
-                        </div>
-                    {% endif %}
+                <div id="bloques_exc_{{ f_str }}">
+                    {% for turno in ['T1', 'T2', 'T3', 'T4'] %}
+                    {% set t_idx = loop.index0 %}
+                    {% set r_val = exc_dia.rangos[t_idx] if (exc_dia and exc_dia.rangos and t_idx < exc_dia.rangos|length) else None %}
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.4rem;">
+                        <span style="width: 30px; color: #6b7280;">{{ turno }}</span>
+                        <input type="time" name="exc_inicio_{{ f_str }}[]" class="form-control" style="width: 150px;"
+                               value="{{ r_val.inicio if r_val else '' }}"
+                               {% if exc_dia and exc_dia.bloqueado %}disabled{% endif %}
+                               onchange="marcarFechaModificada('{{ f_str }}')">
+                        <span>a</span>
+                        <input type="time" name="exc_fin_{{ f_str }}[]" class="form-control" style="width: 150px;"
+                               value="{{ r_val.fin if r_val else '' }}"
+                               {% if exc_dia and exc_dia.bloqueado %}disabled{% endif %}
+                               onchange="marcarFechaModificada('{{ f_str }}')">
+                    </div>
+                    {% endfor %}
                 </div>
                 <input type="hidden" id="mod_{{ f_str }}" {% if exc_dia %}name="fecha_modificada" value="{{ f_str }}"{% endif %}>
             </div>
@@ -245,6 +251,30 @@
             <input type="time" name="exc_fin_${fechaStr}[]" class="form-control" style="width: 145px;" onchange="marcarFechaModificada('${fechaStr}')">
         `;
         cont.appendChild(fila);
+    }
+
+    function toggleBloqueoExcepcion(fechaStr, isBlocked) {
+        const cont = document.getElementById('bloques_exc_' + fechaStr);
+        if (!cont) return;
+        const inputs = cont.querySelectorAll('input[type="time"]');
+        inputs.forEach(input => {
+            input.disabled = isBlocked;
+            if (isBlocked) input.value = '';
+        });
+    }
+
+    function limpiarExcepcionFecha(fechaStr) {
+        marcarFechaModificada(fechaStr);
+        const cont = document.getElementById('bloques_exc_' + fechaStr);
+        if (cont) {
+            const inputs = cont.querySelectorAll('input[type="time"]');
+            inputs.forEach(input => {
+                input.value = '';
+                input.disabled = false;
+            });
+        }
+        const chk = document.querySelector(`input[name="exc_bloqueado_${fechaStr}"]`);
+        if (chk) chk.checked = false;
     }
 </script>
 {% endblock %}
