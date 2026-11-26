@@ -265,7 +265,7 @@ def gestionar_disponibilidad():
             return redirect(url_for('agenda.gestionar_disponibilidad', mes_gestion=mes_gestion))
 
         accion = request.form.get('accion', 'guardar')
-        intervalo_minutos = request.form.get('intervalo_minutos', type=int) or 60
+        intervalo_minutos = request.form.get('intervalo_minutos', type=int) or 50
 
         try:
             # ACCIÓN A: Copiar horario del mes anterior
@@ -435,7 +435,7 @@ def gestionar_disponibilidad():
             DisponibilidadUni.fecha_especifica != None
         ).order_by(DisponibilidadUni.fecha_especifica.desc()).all()
 
-    intervalo_activo = plantilla_base[0].intervalo_minutos if (plantilla_base and plantilla_base[0].intervalo_minutos) else 60
+    intervalo_activo = plantilla_base[0].intervalo_minutos if (plantilla_base and plantilla_base[0].intervalo_minutos) else 50
 
     return render_template(
         'disponibilidad.html',
