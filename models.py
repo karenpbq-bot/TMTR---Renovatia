@@ -325,13 +325,13 @@ class SeguimientoPsi(db.Model):
     numero_sesion = db.Column(db.Integer, nullable=True)
     fecha_sesion = db.Column(db.DateTime(timezone=True), default=get_peru_time)
     
-    nota_subjetiva = db.Column(db.String(500), nullable=True)
-    nota_objetiva = db.Column(db.String(500), nullable=True)
-    apreciacion_clinica = db.Column(db.String(500), nullable=True)
-    plan_tareas = db.Column(db.String(500), nullable=True)
+    nota_subjetiva = db.Column(db.Text, nullable=True)
+    nota_objetiva = db.Column(db.Text, nullable=True)
+    apreciacion_clinica = db.Column(db.Text, nullable=True)
+    plan_tareas = db.Column(db.Text, nullable=True)
     
-    pruebas_aplicadas = db.Column(db.String(500), nullable=True)
-    evaluacion_riesgo = db.Column(db.String(50), nullable=True)
+    pruebas_aplicadas = db.Column(db.Text, nullable=True)
+    evaluacion_riesgo = db.Column(db.Text, nullable=True)
     proxima_cita_recomendada = db.Column(db.Date, nullable=True)
     
     firma_digital_cerrada = db.Column(db.Boolean, default=False)
