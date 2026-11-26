@@ -191,7 +191,7 @@ class DisponibilidadUni(db.Model):
     
     hora_inicio = db.Column(db.Time, nullable=True)
     hora_fin = db.Column(db.Time, nullable=True)
-    intervalo_minutos = db.Column(db.Integer, default=60)
+    intervalo_minutos = db.Column(db.Integer, default=50)
     estado = db.Column(db.Boolean, default=True)
 
     def __repr__(self):
